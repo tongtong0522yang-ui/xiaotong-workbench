@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小童工作台</title>
+<style>
+:root {
+  --wd: #FF9FB5; --wm: #FFB5A7; --wl: #FFCAD4;
+  --ui: #FFFAF5; --tx: #C97A8F; --gd: #FFD66B;
+  --gn: #88D8B0; --rd: #FF6B8A; --bl: #74B9FF;
+  --px: 'Courier New','Microsoft YaHei','SimHei',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:var(--px); background:#FFF5F8; min-height:100vh;
+  display:flex; justify-content:center; align-items:flex-start;
+  image-rendering:pixelated; padding:10px;
+}
+.stars{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.main{
+  position:relative;z-index:1;width:1100px;max-width:100%;
+  background:linear-gradient(180deg,#A8D8EA 0%,#A8D8EA 8%,#A8E6CF 8%,#88D8B0 18%,#A8E6CF 25%,#FFE4EC 100%);
+  border:6px solid #C97A8F;box-shadow:inset 0 0 0 3px #FFB5A7,inset 0 0 0 6px #FF9FB5,0 0 0 3px #1a0a00,0 0 40px rgba(0,0,0,.6);
+  border-radius:6px;overflow:hidden;
+}
+.top{
+  background:linear-gradient(180deg,#FFB5A7,#FF9FB5);padding:10px 20px;
+  border-bottom:4px solid #C97A8F;display:flex;justify-content:space-between;
+  align-items:center;flex-wrap:wrap;gap:8px;
+  box-shadow:inset 0 -2px 0 #FFCAD4;
+}
+.top h1{color:#FFFAF5;font-size:17px;text-shadow:2px 2px 0 #C97A8F;letter-spacing:1px;cursor:pointer}
+.top h1:hover{color:#FFD66B}.top h1 .edit-hint{font-size:11px;opacity:0;transition:opacity .2s}
+.top h1:hover .edit-hint{opacity:1}
+.top .right{display:flex;align-items:center;gap:18px;font-size:20px;color:#FFD66B;text-shadow:1px 1px 0 #C97A8F}
+.gold-badge{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.3);padding:5px 12px;border:2px solid #FFD66B;border-radius:4px}
+.gold-badge .coin{font-size:22px}
+.gold-anim{position:fixed;font-size:22px;color:#FFD66B;font-weight:bold;pointer-events:none;z-index:999;
+  animation:goldUp 1.5s ease-out forwards;text-shadow:1px 1px 0 #C97A8F}
+@keyframes goldUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-50px)}}
+.gold-penalty{color:#ff6b6b!important}
+
+.nav{
+  display:flex;background:rgba(62,43,28,.7);border-bottom:3px solid #C97A8F;
+  overflow-x:auto;padding:0 8px;
+}
+.nav-btn{
+  font-family:var(--px);font-size:22px;padding:10px 12px;border:none;background:none;
+  color:#FFCAD4;cursor:pointer;white-space:nowrap;transition:.15s;
+  border-bottom:3px solid transparent;margin-bottom:-3px;
+  image-rendering:pixelated;
+}
+.nav-btn:hover{color:#FFFAF5;background:rgba(139,105,20,.2)}
+.nav-btn.active{color:#FFD66B;border-bottom-color:#FFD66B;background:rgba(240,192,64,.1)}
+.nav-btn .badge{display:inline-block;background:#FF6B8A;color:#fff;font-size:20px;padding:1px 5px;border-radius:2px;margin-left:4px;min-width:16px;text-align:center}
+
+.main-content{padding:12px;min-height:500px}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+.panel{
+  background:linear-gradient(180deg,rgba(245,230,200,.96),rgba(220,200,160,.96));
+  border:3px solid #FF9FB5;box-shadow:inset 0 0 0 2px #FFCAD4,0 3px 0 #C97A8F;
+  border-radius:4px;padding:14px;margin-bottom:12px;image-rendering:pixelated;
+}
+.panel h2{font-size:20px;color:#C97A8F;border-bottom:2px solid #FF9FB5;padding-bottom:8px;margin-bottom:10px;text-shadow:1px 1px 0 #FFCAD4}
+.panel h3{font-size:17px;color:#FF9FB5;margin:8px 0 6px}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.panel-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+.inp{
+  font-family:var(--px);font-size:11px;padding:7px;background:#FFFAF5;
+  border:2px solid #FF9FB5;color:#C97A8F;outline:none;
+  image-rendering:pixelated;width:100%;
+}
+.inp:focus{border-color:#FFB5A7}
+textarea.inp{resize:vertical;min-height:60px}
+
+.btn{
+  font-family:var(--px);font-size:20px;padding:6px 14px;
+  background:linear-gradient(180deg,#FFCAD4,#FFB5A7);
+  border:2px solid #C97A8F;color:#FFFAF5;cursor:pointer;
+  text-shadow:1px 1px 0 #C97A8F;transition:.1s;image-rendering:pixelated;
+}
+.btn:hover{background:linear-gradient(180deg,#FFC0CB,#FFA0B4)}
+.btn:active{transform:translateY(2px)}
+.btn.sm{font-size:17px;padding:4px 8px}
+.btn.danger{background:linear-gradient(180deg,#FFB3C1,#FF6B8A)}
+.btn.go{background:linear-gradient(180deg,#88D8B0,#5DBE9A)}
+.btn-row{display:flex;gap:6px;margin-top:8px}
+
+.todo-item{display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid #FFCAD4;font-size:22px;color:#C97A8F;cursor:pointer;font-family:var(--px)}
+.todo-item:hover{background:rgba(139,105,20,.08)}
+.todo-del{margin-left:auto;color:#FF9FB5;font-size:18px;cursor:pointer;padding:0 4px;opacity:.6;transition:.15s}
+.todo-del:hover{opacity:1;color:#FF6B8A}
+.todo-cb{width:16px;height:16px;border:2px solid #FF9FB5;background:#FFFAF5;flex-shrink:0;position:relative;image-rendering:pixelated}
+.todo-cb.done::after{content:'V';position:absolute;top:-2px;left:3px;color:#5DBE9A;font-size:22px;font-weight:bold}
+.todo-item.finished .todo-tx{text-decoration:line-through;opacity:.5}
+.todo-input-row{display:flex;gap:6px;margin-top:8px}
+.todo-input-row .inp{flex:1}
+
+.progress-wrap{display:flex;align-items:center;gap:8px;margin:6px 0}
+.progress-bar{flex:1;height:16px;background:#FFE4EC;border:2px solid #C97A8F;border-radius:2px;overflow:hidden;image-rendering:pixelated}
+.progress-fill{height:100%;transition:width .5s steps(20)}
+.pf-green{background:linear-gradient(180deg,#A8E6CF,#5DBE9A)}
+.pf-gold{background:linear-gradient(180deg,#FFE5B4,#FFC870)}
+.pf-red{background:linear-gradient(180deg,#FFB3C1,#FF6B8A)}
+.progress-label{font-size:11px;color:#C97A8F;min-width:50px;text-align:right}
+
+.work-card{
+  background:rgba(245,230,200,.5);border:2px solid #FFCAD4;padding:10px;border-radius:3px;min-height:120px
+}
+.work-card h4{font-size:22px;color:#FF9FB5;margin-bottom:8px}
+.work-card .sub-todo{margin-bottom:4px}
+
+.weight-log{display:flex;align-items:center;gap:10px;margin:10px 0;flex-wrap:wrap}
+.weight-input{width:100px}
+.weight-chart{width:100%;height:120px;background:rgba(62,43,28,.1);border:2px solid #FF9FB5;border-radius:2px;margin:8px 0;position:relative}
+.weight-history{max-height:200px;overflow-y:auto}
+.weight-row{display:flex;justify-content:space-between;padding:4px 8px;border-bottom:1px solid #FFCAD4;font-size:11px;color:#C97A8F}
+
+.sub-tabs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.sub-tab{
+  font-family:var(--px);font-size:20px;padding:5px 10px;border:2px solid #FF9FB5;background:#FFE5EC;color:#C97A8F;
+  cursor:pointer;image-rendering:pixelated;transition:.1s;
+}
+.sub-tab.active{background:#FF9FB5;color:#FFFAF5}
+
+.xhs-metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+.xhs-metric{background:rgba(245,230,200,.5);padding:8px;text-align:center;border:2px solid #FFCAD4;border-radius:3px}
+.xhs-metric .val{font-size:20px;color:#C97A8F;font-weight:bold}
+.xhs-metric .lbl{font-size:20px;color:#FF9FB5;margin-top:2px}
+
+.expense-total{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0}
+.expense-item{font-size:22px;color:#C97A8F}
+.expense-item span{color:#FF6B8A;font-weight:bold}
+.expense-item .ok{color:#5DBE9A}
+.expense-list{max-height:180px;overflow-y:auto}
+.expense-row{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-bottom:1px solid #FFCAD4;font-size:11px}
+.expense-row .amt{font-weight:bold}
+.expense-row .income{color:#5DBE9A}
+.expense-row .expense{color:#FF6B8A}
+
+.habit-card{background:rgba(245,230,200,.5);border:2px solid #FFCAD4;padding:10px;border-radius:3px}
+.habit-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.habit-header h4{font-size:22px;color:#FF9FB5}
+.habit-streak{font-size:20px;color:#FFB5A7}
+.habit-streak .fire{font-size:12px}
+.habit-check-row{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
+.habit-day{
+  width:26px;height:26px;border:2px solid #FFCAD4;background:#FFFAF5;font-size:20px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  image-rendering:pixelated;transition:.1s;border-radius:2px;font-family:var(--px);color:#C97A8F
+}
+.habit-day.done{background:#A8E6CF;border-color:#88D8B0;color:#fff}
+.habit-day.today{border-color:#FFD66B;border-width:3px}
+
+.diary-area textarea{min-height:120px;font-family:var(--px);font-size:22px}
+.diary-list{max-height:200px;overflow-y:auto}
+.diary-entry{background:rgba(245,230,200,.5);padding:8px;margin:6px 0;border:2px solid #FFCAD4;border-radius:3px}
+.diary-entry .diary-date{font-size:20px;color:#FFB5A7;margin-bottom:4px}
+.diary-entry .diary-content{font-size:11px;color:#C97A8F;line-height:1.5}
+
+.farm-canvas-container{width:100%;background:rgba(62,43,28,.3);border:3px solid #FF9FB5;border-radius:4px;overflow:hidden;margin-top:12px}
+.farm-canvas-container canvas{display:block;width:100%;image-rendering:pixelated}
+
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:100;justify-content:center;align-items:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:linear-gradient(180deg,#FFFAF5,#FFE5EC);border:4px solid #FF9FB5;box-shadow:inset 0 0 0 2px #FFCAD4,0 6px 0 #C97A8F;padding:20px;border-radius:4px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;image-rendering:pixelated}
+.modal-box h3{font-size:20px;color:#C97A8F;margin-bottom:12px}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:#FFCAD4;border-radius:3px}
+::-webkit-scrollbar-thumb{background:#FF9FB5;border-radius:3px}
+
+/* ===== 右下角像素小人 ===== */
+.pixel-avatar-wrap{position:fixed;right:20px;bottom:20px;z-index:50;cursor:pointer;user-select:none}
+#pixelAvatarCanvas{display:block}
+.pixel-avatar-wrap:hover #pixelAvatarCanvas{animation:avatarBob 1s ease-in-out infinite}
+@keyframes avatarBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.avatar-shadow{width:64px;height:6px;background:rgba(0,0,0,.2);border-radius:50%;margin:2px auto 0;filter:blur(1px)}
+.avatar-bubble{position:absolute;bottom:100%;right:0;margin-bottom:10px;background:#FFFAF5;border:3px solid #FF9FB5;border-radius:8px;padding:8px 12px;min-width:120px;max-width:200px;color:#C97A8F;font-size:12px;line-height:1.5;box-shadow:2px 2px 0 #C97A8F;white-space:normal;word-break:break-all}
+.avatar-bubble::after{content:'';position:absolute;top:100%;right:24px;border:8px solid transparent;border-top-color:#FF9FB5}
+.avatar-bubble.show{display:block!important;animation:bubblePop .25s ease-out}
+@keyframes bubblePop{0%{transform:translateY(6px) scale(.9);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+/* ===== 商城物品样式 ===== */
+.shop-card{background:linear-gradient(180deg,#FFFAF5,#FFE4EC);border:3px solid #FF9FB5;border-radius:4px;padding:10px;text-align:center;box-shadow:inset 0 0 0 2px #FFCAD4,0 2px 0 #C97A8F}
+.shop-card.owned{background:linear-gradient(180deg,#E8F5E9,#C8E6C9);border-color:#88D8B0}
+.shop-emoji{font-size:28px;margin:6px 0}
+.shop-name{font-size:13px;color:#C97A8F;font-weight:bold;margin-bottom:4px}
+.shop-desc{font-size:11px;color:#FF9FB5;margin-bottom:8px;line-height:1.4}
+.shop-price{font-size:14px;color:#FFD66B;font-weight:bold;text-shadow:1px 1px 0 #C97A8F;margin-bottom:6px}
+.shop-buy{font-family:var(--px);font-size:12px;padding:4px 10px;background:linear-gradient(180deg,#FFCAD4,#FFB5A7);border:2px solid #C97A8F;color:#FFFAF5;cursor:pointer;border-radius:3px;text-shadow:1px 1px 0 #C97A8F}
+.shop-buy:disabled{background:#ddd;border-color:#999;cursor:not-allowed;opacity:.6;text-shadow:none}
+.shop-buy.owned-btn{background:linear-gradient(180deg,#A8E6CF,#88D8B0);border-color:#5DBE9A}
+.shop-buy.danger{background:linear-gradient(180deg,#FFB3C1,#FF6B8A);border-color:#C97A8F}
+.inv-item{display:inline-block;background:rgba(255,250,245,.8);border:2px solid #FFCAD4;border-radius:3px;padding:4px 8px;margin:3px;font-size:12px;color:#C97A8F}
+
+.anni-card{background:linear-gradient(180deg,#FFFAF5,#FFE4EC);border:3px solid #FF9FB5;border-radius:4px;padding:12px;margin-bottom:10px;box-shadow:inset 0 0 0 2px #FFCAD4,0 2px 0 #C97A8F}
+.anni-card img{width:100%;max-height:200px;object-fit:cover;border:2px solid #FFCAD4;border-radius:3px;margin:8px 0}
+.anni-title{font-size:15px;color:#C97A8F;font-weight:bold;margin-bottom:4px}
+.anni-date{font-size:12px;color:#FF9FB5;margin-bottom:4px}
+.anni-desc{font-size:11px;color:#C97A8F;line-height:1.5;margin-bottom:6px}
+.anni-countdown{font-size:14px;color:#FFD66B;font-weight:bold;text-shadow:1px 1px 0 #C97A8F}
+
+@media(max-width:800px){.panel-grid,.panel-grid-3{grid-template-columns:1fr}
+  .top h1{font-size:14px}.top .right{font-size:14px;gap:8px}
+  .nav-btn{font-size:15px;padding:8px 6px}
+  .nav-btn .badge{font-size:13px}
+  .gold-badge .coin{font-size:15px}
+  .panel h2{font-size:15px}
+  .panel h3{font-size:13px}
+  .btn{font-size:14px}
+  .btn.sm{font-size:12px}
+  .todo-item{font-size:14px}
+  .todo-cb.done::after{font-size:14px}
+  .work-card h4{font-size:15px}
+  .expense-item{font-size:14px}
+  .habit-header h4{font-size:15px}
+  .habit-streak{font-size:14px}
+  .habit-cell{font-size:14px}
+  .diary-area textarea{font-size:14px}
+  .diary-entry .diary-date{font-size:14px}
+  .xhs-metric .val{font-size:14px}
+  .xhs-metric .lbl{font-size:14px}
+  .modal-box h3{font-size:15px}
+  .gold-anim{font-size:16px}
+  [style*="font-size:22px"]{font-size:14px!important}
+  [style*="font-size:20px"]{font-size:14px!important}
+  .todo-del{font-size:14px}
+}
+@media(max-width:480px){
+  .top h1{font-size:13px}
+  .top .right{font-size:12px;gap:6px}
+  .nav-btn{font-size:13px;padding:6px 4px}
+  .nav-btn .badge{font-size:11px}
+  .panel h2{font-size:13px}
+  .panel h3{font-size:12px}
+  .btn{font-size:12px;padding:5px 10px}
+  .btn.sm{font-size:11px}
+  .todo-item{font-size:12px}
+  .work-card h4{font-size:13px}
+  .expense-item{font-size:12px}
+  .habit-header h4{font-size:13px}
+  .habit-streak{font-size:12px}
+  .habit-cell{font-size:12px}
+  .diary-area textarea{font-size:12px}
+  .diary-entry .diary-date{font-size:12px}
+  .xhs-metric .val{font-size:12px}
+  .xhs-metric .lbl{font-size:12px}
+  .modal-box h3{font-size:13px}
+  .main-content{padding:8px}
+  .panel{padding:10px;margin-bottom:8px}
+  [style*="font-size:22px"]{font-size:12px!important}
+  [style*="font-size:20px"]{font-size:12px!important}
+  .pixel-avatar-wrap{right:10px;bottom:10px}
+  #pixelAvatarCanvas{width:60px;height:72px}
+  .avatar-bubble{max-width:150px;font-size:11px}
+  .todo-del{font-size:12px}
+}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+
+<div class="main">
+
+<div class="top">
+  <h1 id="workTitle" onclick="editTitle()" title="点击修改名称">小童工作台 <span class="edit-hint">✎</span></h1>
+  <div class="right">
+    <span id="topTime">06:00</span>
+    <span id="topDate">2026年7月30日</span>
+    <div class="gold-badge">
+      <span class="coin">金</span><span id="topGold">0</span>G
+    </div>
+  </div>
+</div>
+
+<div class="nav" id="navBar">
+  <button class="nav-btn active" data-tab="todo">每日待办</button>
+  <button class="nav-btn" data-tab="work">工作台</button>
+  <button class="nav-btn" data-tab="weight">体重监测</button>
+  <button class="nav-btn" data-tab="xhs">小红书</button>
+  <button class="nav-btn" data-tab="money">收支记账</button>
+  <button class="nav-btn" data-tab="habit">习惯打卡</button>
+  <button class="nav-btn" data-tab="shop">金币商城</button>
+  <button class="nav-btn" data-tab="anniversary">纪念日</button>
+</div>
+
+<div class="main-content">
+
+<!-- Tab 1: 每日待办 -->
+<div class="tab-panel active" id="tab-todo">
+  <div class="panel">
+    <h2>今日农活 (完成+50G)</h2>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill pf-green" id="todoProgress" style="width:0%"></div></div>
+      <span class="progress-label" id="todoProgressLabel">0/0</span>
+    </div>
+    <div id="todoList"></div>
+    <div class="todo-input-row">
+      <input class="inp" id="todoInput" placeholder="添加新任务..." maxlength="40">
+      <button class="btn" id="addTodo">+</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 2: 工作台 -->
+<div class="tab-panel" id="tab-work">
+  <div class="panel-grid-3">
+    <div class="work-card">
+      <h4>大众点评团购</h4>
+      <div class="sub-todo" id="workDianping"></div>
+      <div class="todo-input-row">
+        <input class="inp" id="workDpInput" placeholder="添加任务..." maxlength="30">
+        <button class="btn sm" onclick="addWorkTask('dianping')">+</button>
+      </div>
+    </div>
+    <div class="work-card">
+      <h4>抖音团购</h4>
+      <div class="sub-todo" id="workDouyin"></div>
+      <div class="todo-input-row">
+        <input class="inp" id="workDyInput" placeholder="添加任务..." maxlength="30">
+        <button class="btn sm" onclick="addWorkTask('douyin')">+</button>
+      </div>
+    </div>
+    <div class="work-card">
+      <h4>新店打法测试</h4>
+      <div class="sub-todo" id="workXindian"></div>
+      <div class="todo-input-row">
+        <input class="inp" id="workXdInput" placeholder="添加任务..." maxlength="30">
+        <button class="btn sm" onclick="addWorkTask('xindian')">+</button>
+      </div>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:8px">
+    <h2>工作笔记</h2>
+    <textarea class="inp" id="workNotes" placeholder="记录今日工作心得..." style="min-height:100px"></textarea>
+    <div class="btn-row"><button class="btn sm" onclick="saveWorkNotes()">保存笔记</button></div>
+  </div>
+</div>
+
+<!-- Tab 3: 体重监测 -->
+<div class="tab-panel" id="tab-weight">
+  <div class="panel">
+    <h2>每日体重打卡 (打卡+30G)</h2>
+    <div class="weight-log">
+      <span style="font-size:22px;color:#C97A8F">今日体重：</span>
+      <input class="inp weight-input" id="weightInput" type="number" step="0.1" placeholder="kg">
+      <button class="btn go" id="weightBtn">打卡记录</button>
+    </div>
+    <div class="weight-chart" id="weightChart">
+      <canvas id="weightCanvas" width="700" height="120"></canvas>
+    </div>
+    <div class="weight-history" id="weightHistory"></div>
+  </div>
+</div>
+
+<!-- Tab 4: 小红书 -->
+<div class="tab-panel" id="tab-xhs">
+  <div class="panel">
+    <h2>小红书账号管理</h2>
+    <div class="sub-tabs" id="xhsSubtabs">
+      <button class="sub-tab active" data-sub="xhs-content">笔记内容</button>
+      <button class="sub-tab" data-sub="xhs-data">笔记数据监测</button>
+      <button class="sub-tab" data-sub="xhs-growth">账号增长</button>
+    </div>
+
+    <div class="sub-panel active" id="sub-xhs-content">
+      <h3>笔记内容规划</h3>
+      <textarea class="inp" id="xhsContentNotes" placeholder="记录笔记灵感、选题、大纲..." style="min-height:120px"></textarea>
+      <div class="btn-row">
+        <button class="btn sm" onclick="saveXhsContent()">保存内容</button>
+        <button class="btn sm go" onclick="addGold(20,'笔记灵感+20G')">灵感+20G</button>
+      </div>
+      <div style="margin-top:10px">
+        <h3>已发布笔记</h3>
+        <div id="xhsPublishedList"></div>
+      </div>
+    </div>
+
+    <div class="sub-panel" id="sub-xhs-data" style="display:none">
+      <h3>笔记数据实时监测</h3>
+      <div class="todo-input-row" style="margin-bottom:8px">
+        <input class="inp" id="xhsNoteUrl" placeholder="输入笔记链接获取数据...">
+        <button class="btn sm" onclick="fetchXhsData()">获取数据</button>
+      </div>
+      <div id="xhsDataResult" style="font-size:22px;color:#C97A8F">
+        <em style="color:#FFB5A7">输入小红书笔记链接，系统将尝试抓取公开数据...</em>
+      </div>
+      <h3 style="margin-top:10px">监测中的笔记</h3>
+      <div id="xhsMonitorList"></div>
+    </div>
+
+    <div class="sub-panel" id="sub-xhs-growth" style="display:none">
+      <h3>账号增长数据</h3>
+      <div class="xhs-metrics">
+        <div class="xhs-metric"><div class="val" id="xhsFollowers">0</div><div class="lbl">粉丝数</div></div>
+        <div class="xhs-metric"><div class="val" id="xhsLikes">0</div><div class="lbl">总获赞</div></div>
+        <div class="xhs-metric"><div class="val" id="xhsShares">0</div><div class="lbl">总转发</div></div>
+        <div class="xhs-metric"><div class="val" id="xhsNotes">0</div><div class="lbl">发布笔记</div></div>
+      </div>
+      <div class="todo-input-row" style="margin-top:10px">
+        <input class="inp" id="xhsGrowthInput" placeholder="更新数据 (粉丝/点赞/转发/笔记数)" maxlength="50">
+        <button class="btn sm go" onclick="updateXhsGrowth()">更新</button>
+      </div>
+      <div class="weight-history" id="xhsGrowthHistory" style="margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 5: 收支记账 -->
+<div class="tab-panel" id="tab-money">
+  <div class="panel">
+    <h2>收支记账 - 超预算扣金币！</h2>
+    <div class="expense-total">
+      <div class="expense-item">日预算：<span id="dayBudgetDisplay">200</span>G/天</div>
+      <div class="expense-item">今日已花：<span id="daySpent">0</span>G</div>
+      <div class="expense-item">周预算：<span id="weekBudgetDisplay">1400</span>G/周</div>
+      <div class="expense-item">本周已花：<span id="weekSpent">0</span>G</div>
+    </div>
+    <div class="progress-wrap">
+      <span style="font-size:11px;color:#C97A8F">日</span>
+      <div class="progress-bar"><div class="progress-fill pf-gold" id="dayBudgetBar" style="width:0%"></div></div>
+      <span class="progress-label" style="font-size:20px" id="dayBudgetPercent">0%</span>
+    </div>
+    <div class="progress-wrap">
+      <span style="font-size:11px;color:#C97A8F">周</span>
+      <div class="progress-bar"><div class="progress-fill pf-red" id="weekBudgetBar" style="width:0%"></div></div>
+      <span class="progress-label" style="font-size:20px" id="weekBudgetPercent">0%</span>
+    </div>
+    <div class="todo-input-row" style="margin-top:10px">
+      <input class="inp" id="expenseDesc" placeholder="项目描述" maxlength="20" style="flex:2">
+      <input class="inp" id="expenseAmt" type="number" step="0.01" placeholder="金额(+收入/-支出)" style="flex:1">
+      <button class="btn" id="addExpense">记一笔</button>
+    </div>
+    <div class="expense-list" id="expenseList" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- Tab 6: 习惯打卡 -->
+<div class="tab-panel" id="tab-habit">
+  <!-- 写日记 -->
+  <div class="panel">
+    <h2>写日记 (打卡+30G)</h2>
+    <div class="habit-header">
+      <h4>今日日记</h4>
+      <span class="habit-streak"><span class="fire">火</span> 连续 <strong id="diaryStreak">0</strong> 天</span>
+    </div>
+    <div class="diary-area">
+      <textarea class="inp" id="diaryText" placeholder="今天发生了什么有趣的事？记录下你的想法吧..."></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn go" id="diarySave">保存日记 (+30G)</button>
+      <button class="btn sm" id="viewDiaryBtn">查看历史日记</button>
+    </div>
+    <div class="diary-list" id="diaryListView" style="display:none"></div>
+  </div>
+
+  <!-- 看书 -->
+  <div class="panel">
+    <h2>阅读打卡 (打卡+20G)</h2>
+    <div class="habit-header">
+      <h4 id="currentBook">当前在读：暂无</h4>
+      <span class="habit-streak"><span class="fire">火</span> 连续 <strong id="readStreak">0</strong> 天</span>
+    </div>
+    <div class="todo-input-row">
+      <input class="inp" id="bookTitle" placeholder="书名" maxlength="30" style="flex:1">
+      <input class="inp" id="bookPages" type="number" placeholder="今日页数" style="width:100px">
+      <button class="btn go" id="readCheckin">打卡</button>
+    </div>
+    <textarea class="inp" id="bookNotes" placeholder="读书笔记/心得分享..." style="min-height:60px;margin-top:8px"></textarea>
+    <div class="btn-row">
+      <button class="btn sm" id="saveBookNoteBtn">保存读书笔记</button>
+    </div>
+    <div class="weight-history" id="readHistory" style="margin-top:8px"></div>
+  </div>
+
+  <!-- 看电影 -->
+  <div class="panel">
+    <h2>电影记录 (打卡+20G)</h2>
+    <div class="habit-header">
+      <h4>最近观看</h4>
+      <span class="habit-streak"><span class="fire">火</span> 连续 <strong id="movieStreak">0</strong> 周</span>
+    </div>
+    <div class="todo-input-row">
+      <input class="inp" id="movieTitle" placeholder="电影名称" maxlength="30" style="flex:1">
+      <input class="inp" id="movieRating" type="number" step="0.1" min="0" max="10" placeholder="评分/10" style="width:80px">
+      <button class="btn go" id="movieCheckin">记录</button>
+    </div>
+    <textarea class="inp" id="movieReview" placeholder="电影观后感..." style="min-height:60px;margin-top:8px"></textarea>
+    <div class="weight-history" id="movieHistory" style="margin-top:8px"></div>
+  </div>
+
+  <!-- 自定义习惯 -->
+  <div class="panel">
+    <h2>自定义习惯</h2>
+    <div class="todo-input-row" style="margin-bottom:8px">
+      <input class="inp" id="customHabitName" placeholder="习惯名称（如：健身、冥想、英语...）" maxlength="15">
+      <button class="btn sm" id="addCustomHabitBtn">添加</button>
+    </div>
+    <div id="customHabits"></div>
+  </div>
+</div>
+
+<!-- Tab 7: 金币商城 -->
+<div class="tab-panel" id="tab-shop">
+  <div class="panel">
+    <h2>金币商城</h2>
+    <div style="margin-bottom:10px;color:#C97A8F">
+      💰 我的金币：<strong id="shopGoldDisplay" style="color:#FFD66B;font-size:15px;text-shadow:1px 1px 0 #C97A8F">0</strong> G
+    </div>
+    <div class="panel-grid-3" id="shopItems"></div>
+    <div style="margin-top:14px;padding:10px;background:rgba(255,255,255,.4);border:2px dashed #FFCAD4;border-radius:3px">
+      <h3 style="margin:0 0 8px 0">添加自定义物品</h3>
+      <div class="todo-input-row">
+        <input class="inp" id="customItemEmoji" placeholder="Emoji" maxlength="4" style="width:60px;text-align:center">
+        <input class="inp" id="customItemName" placeholder="物品名称" maxlength="15" style="flex:1">
+        <input class="inp" id="customItemPrice" type="number" placeholder="价格" min="1" style="width:80px">
+      </div>
+      <input class="inp" id="customItemDesc" placeholder="物品描述..." maxlength="30" style="margin-top:6px">
+      <div class="btn-row" style="margin-top:6px">
+        <button class="btn sm" onclick="addCustomShopItem()">添加物品</button>
+      </div>
+    </div>
+    <h3 style="margin-top:14px">我的背包</h3>
+    <div id="myInventory" style="color:#FFB5A7;font-size:12px;padding:10px;background:rgba(255,255,255,.4);border:2px dashed #FFCAD4;border-radius:3px;min-height:60px">
+      还没有物品，去商城兑换你的第一个宝贝吧！
+    </div>
+  </div>
+</div>
+
+<!-- Tab 8: 纪念日 -->
+<div class="tab-panel" id="tab-anniversary">
+  <div class="panel">
+    <h2>纪念日 (添加+10G)</h2>
+    <div class="todo-input-row" style="margin-bottom:10px">
+      <input class="inp" id="anniTitle" placeholder="纪念日名称（如：在一起100天）" maxlength="20" style="flex:1">
+      <input class="inp" id="anniDate" type="date">
+    </div>
+    <input class="inp" id="anniDesc" placeholder="描述一下这个特别的日子..." maxlength="50" style="margin-bottom:6px">
+    <div class="todo-input-row">
+      <input class="inp" id="anniImg" placeholder="图片URL（可选，粘贴图片链接）" style="flex:1">
+      <button class="btn sm" onclick="addAnniversary()">添加纪念日</button>
+    </div>
+    <div id="anniversaryList" style="margin-top:12px"></div>
+  </div>
+</div>
+
+</div><!-- main-content -->
+
+<div class="farm-canvas-container">
+  <canvas id="farmCanvas" width="1064" height="140"></canvas>
+</div>
+
+</div><!-- main -->
+
+<!-- 右下角像素小人 -->
+<div class="pixel-avatar-wrap" id="pixelAvatarWrap" onclick="pokeAvatar()">
+  <div class="avatar-bubble" id="avatarBubble" style="display:none"></div>
+  <canvas id="pixelAvatarCanvas" width="80" height="96" style="image-rendering:pixelated;width:80px;height:96px;display:block"></canvas>
+  <div class="avatar-shadow"></div>
+</div>
+
+<script>
+// ===== 全局变量 =====
+var G_K='farm_gold', D_K='farm_data';
+var D={gold:0,todos:[],workTodos:{dianping:[],douyin:[],xindian:[]},workNotes:'',
+  weightLog:[],xhsContent:'',xhsPublished:[],xhsMonitor:[],xhsGrowth:{followers:0,likes:0,shares:0,notes:0,history:[]},
+  expenses:[],dayBudget:200,weekBudget:1400,
+  diaryEntries:[],diaryStreak:0,lastDiaryDate:'',
+  readLog:[],readStreak:0,lastReadDate:'',currentBook:'',
+  movieLog:[],movieStreak:0,lastMovieDate:'',
+  customHabits:[],exchanged:[],inventory:{},customShopItems:[],anniversaries:[]
+};
+try{var sv=JSON.parse(localStorage.getItem(D_K)||'{}');Object.assign(D,sv)}catch(e){}
+try{var sg=parseInt(localStorage.getItem(G_K));if(!isNaN(sg))D.gold=sg}catch(e){}
+
+function S(){localStorage.setItem(D_K,JSON.stringify(D));localStorage.setItem(G_K,D.gold.toString());UG()}
+function UG(){document.getElementById('topGold').textContent=D.gold.toLocaleString()}
+function AG(a,r){
+  D.gold+=a;S();
+  var el=document.createElement('div');
+  el.className='gold-anim'+(a<0?' gold-penalty':'');
+  el.textContent=(a>0?'+':'')+a+'G '+(r||'');
+  el.style.left=Math.random()*60+20+'%';el.style.top='30%';
+  document.body.appendChild(el);
+  setTimeout(function(){el.remove()},1500)
+}
+function DG(a,r){D.gold=Math.max(0,D.gold-a);S();
+  var el=document.createElement('div');
+  el.className='gold-anim gold-penalty';
+  el.textContent='-'+a+'G '+(r||'');
+  el.style.left=Math.random()*60+20+'%';el.style.top='30%';
+  document.body.appendChild(el);
+  setTimeout(function(){el.remove()},1500)
+}
+function DS(){
+  var n=new Date();
+  return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')
+}
+function DM(elm){return document.getElementById(elm)}
+function QS(s){return document.querySelector(s)}
+function QA(s){return document.querySelectorAll(s)}
+
+// ===== 星星背景 =====
+(function(){
+  var st=DM('stars');
+  for(var i=0;i<60;i++){
+    var s=document.createElement('div');
+    s.style.cssText='position:absolute;width:'+(Math.random()*3+1)+'px;height:'+(Math.random()*3+1)+'px;background:#fff;top:'+(Math.random()*100)+'%;left:'+(Math.random()*100)+'%;opacity:'+(Math.random()*0.7+0.3)+';animation:twinkle '+(Math.random()*3+2)+'s ease-in-out infinite';
+    st.appendChild(s)
+  }
+  var sty=document.createElement('style');
+  sty.textContent='@keyframes twinkle{0%,100%{opacity:0.3}50%{opacity:1}}';
+  document.head.appendChild(sty)
+})();
+
+// ===== 时钟 =====
+function UC(){
+  var n=new Date();
+  DM('topTime').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  DM('topDate').textContent=n.getFullYear()+'年'+(n.getMonth()+1)+'月'+n.getDate()+'日';
+}
+UC();setInterval(UC,30000);
+
+// ===== Tab 切换 =====
+QA('.nav-btn').forEach(function(b){
+  b.addEventListener('click',function(){
+    QA('.nav-btn').forEach(function(x){x.classList.remove('active')});
+    this.classList.add('active');
+    QA('.tab-panel').forEach(function(p){p.classList.remove('active')});
+    DM('tab-'+this.dataset.tab).classList.add('active')
+  })
+});
+
+// ===== 1. 每日待办 =====
+function RT(){
+  var lst=DM('todoList'),tot=D.todos.length,dn=0;
+  lst.innerHTML='';
+  D.todos.forEach(function(t,i){
+    dn+=t.done?1:0;
+    var dv=document.createElement('div');
+    dv.className='todo-item'+(t.done?' finished':'');
+    dv.innerHTML='<span class="todo-cb'+(t.done?' done':'')+'"></span><span class="todo-tx">'+t.text+'</span><span class="todo-del" onclick="event.stopPropagation();DT('+i+')">×</span>';
+    dv.addEventListener('click',function(){TT(i)});
+    lst.appendChild(dv)
+  });
+  var pct=tot>0?Math.round((dn/tot)*100):0;
+  DM('todoProgress').style.width=pct+'%';
+  DM('todoProgressLabel').textContent=dn+'/'+tot
+}
+function TT(i){
+  if(!D.todos[i].done){
+    D.todos[i].done=true;
+    if(!D.todos[i].rewarded){
+      D.todos[i].rewarded=true;
+      AG(50,'完成任务 +50G');
+      SAY_RAND('todoDone')
+    }
+  }else{
+    D.todos[i].done=false;
+  }
+  S();RT()
+}
+function DT(i){
+  if(!confirm('确定删除这条任务？'))return;
+  D.todos.splice(i,1);S();RT()
+}
+function AT(){
+  var inp=DM('todoInput'),txt=inp.value.trim();if(!txt)return;
+  D.todos.push({text:txt,done:false,rewarded:false});inp.value='';AG(5,'添加任务 +5G');SAY_RAND('todoAdd');S();RT()
+}
+DM('addTodo').addEventListener('click',AT);
+DM('todoInput').addEventListener('keydown',function(e){if(e.key==='Enter')AT()});
+RT();
+
+// ===== 2. 工作台 =====
+function WTH(key,id){
+  var items=D.workTodos[key]||[];
+  return items.map(function(t,i){
+    return '<div class="todo-item'+(t.done?' finished':'')+'" onclick="TWT(\''+key+'\','+i+')" style="font-size:11px">'+
+      '<span class="todo-cb'+(t.done?' done':'')+'"></span><span class="todo-tx">'+t.text+'</span></div>'
+  }).join('')
+}
+function RWT(){
+  DM('workDianping').innerHTML=WTH('dianping');
+  DM('workDouyin').innerHTML=WTH('douyin');
+  DM('workXindian').innerHTML=WTH('xindian');
+}
+function TWT(key,i){
+  D.workTodos[key][i].done=!D.workTodos[key][i].done;
+  if(D.workTodos[key][i].done){AG(30,'工作完成 +30G');SAY_RAND('workDone')}
+  S();RWT()
+}
+function AWT(key){
+  var mp={dianping:'workDpInput',douyin:'workDyInput',xindian:'workXdInput'};
+  var inp=DM(mp[key]),txt=inp.value.trim();if(!txt)return;
+  if(!D.workTodos[key])D.workTodos[key]=[];
+  D.workTodos[key].push({text:txt,done:false});inp.value='';AG(5,'添加工作 +5G');SAY_RAND('todoAdd');S();RWT()
+}
+function SWN(){D.workNotes=DM('workNotes').value;S();AG(10,'工作笔记 +10G');SAY_RAND('workDone')}
+DM('workNotes').value=D.workNotes||'';
+RWT();
+
+// ===== 3. 体重监测 =====
+function RWG(){
+  var hst=DM('weightHistory');
+  if(!D.weightLog.length){hst.innerHTML='<div style="font-size:11px;color:#FFB5A7;padding:10px">还没记录体重，开始打卡吧！</div>'}
+  else hst.innerHTML=D.weightLog.slice().reverse().map(function(w){
+    return '<div class="weight-row"><span>'+w.date+'</span><span>'+w.weight+' kg</span></div>'
+  }).join('');
+  DWC()
+}
+function DWC(){
+  var cv=DM('weightCanvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  var logs=D.weightLog.slice(-30);if(logs.length<2)return;
+  var ws=logs.map(function(l){return l.weight});
+  var min=Math.min.apply(null,ws)-2,max=Math.max.apply(null,ws)+2;
+  var rg=max-min||1;
+  ctx.strokeStyle='#FF9FB5';ctx.lineWidth=2;ctx.beginPath();
+  logs.forEach(function(l,i){
+    var x=20+(i/(logs.length-1))*(W-40);
+    var y=H-20-((l.weight-min)/rg)*(H-40);
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    ctx.fillStyle='#C97A8F';ctx.fillRect(x-3,y-3,6,6);
+  });
+  ctx.stroke();
+  ctx.fillStyle='#FFB5A7';ctx.font='8px monospace';
+  ctx.fillText(min.toFixed(1)+'kg',2,H-5);
+  ctx.fillText(max.toFixed(1)+'kg',2,12);
+}
+DM('weightBtn').addEventListener('click',function(){
+  var w=parseFloat(DM('weightInput').value);if(isNaN(w)||w<=0)return;
+  var ds=DS();
+  var tl=D.weightLog.find(function(l){return l.date===ds});
+  if(tl){tl.weight=w}else{D.weightLog.push({date:ds,weight:w})}
+  D.weightLog.sort(function(a,b){return a.date>b.date?1:-1});
+  AG(30,'体重打卡 +30G');SAY_RAND('weightCheckin');DM('weightInput').value='';S();RWG()
+});
+RWG();
+
+// ===== 4. 小红书 =====
+QA('#xhsSubtabs .sub-tab').forEach(function(b){
+  b.addEventListener('click',function(){
+    QA('#xhsSubtabs .sub-tab').forEach(function(x){x.classList.remove('active')});
+    this.classList.add('active');
+    QA('#tab-xhs .sub-panel').forEach(function(p){p.style.display='none'});
+    DM('sub-'+this.dataset.sub).style.display='block'
+  })
+});
+DM('xhsContentNotes').value=D.xhsContent||'';
+function SXC(){D.xhsContent=DM('xhsContentNotes').value;S();AG(10,'笔记内容保存 +10G');SAY_RAND('xhsSave')}
+function FXD(){
+  var url=DM('xhsNoteUrl').value.trim();if(!url)return;
+  DM('xhsDataResult').innerHTML='<span style="color:#FFB5A7">正在尝试获取数据...（注：小红书数据需通过开放API获取，此处为模拟演示）</span>';
+  setTimeout(function(){
+    var mk={likes:Math.floor(Math.random()*500)+50,comments:Math.floor(Math.random()*100)+10,collects:Math.floor(Math.random()*200)+20};
+    DM('xhsDataResult').innerHTML='<div style="background:rgba(100,200,100,.15);padding:8px;border:1px solid #88D8B0;border-radius:3px;margin-top:6px">'+
+      '<strong>模拟数据(演示)：</strong><br>点赞：'+mk.likes+' | 评论：'+mk.comments+' | 收藏：'+mk.collects+'<br>'+
+      '<span style="font-size:20px;color:#FFB5A7">实际使用需接入小红书开放平台API</span></div>';
+    D.xhsMonitor.push({url:url,data:mk,time:new Date().toLocaleString()});
+    if(D.xhsMonitor.length>20)D.xhsMonitor=D.xhsMonitor.slice(-20);
+    S();RXM()
+  },800)
+}
+function RXM(){
+  var el=DM('xhsMonitorList');
+  if(!D.xhsMonitor.length){el.innerHTML='<em style="font-size:11px;color:#FFB5A7">暂无监测笔记</em>'}
+  else el.innerHTML=D.xhsMonitor.slice().reverse().map(function(m){
+    return '<div class="weight-row"><span>'+m.time+'</span><span>赞'+m.data.likes+' 评'+m.data.comments+' 藏'+m.data.collects+'</span></div>'
+  }).join('')
+}
+function UXG(){
+  var ps=DM('xhsGrowthInput').value.trim().split(/[,，\s\/]+/);
+  if(ps.length>=4){
+    D.xhsGrowth.followers=parseInt(ps[0])||D.xhsGrowth.followers;
+    D.xhsGrowth.likes=parseInt(ps[1])||D.xhsGrowth.likes;
+    D.xhsGrowth.shares=parseInt(ps[2])||D.xhsGrowth.shares;
+    D.xhsGrowth.notes=parseInt(ps[3])||D.xhsGrowth.notes;
+  }
+  D.xhsGrowth.history.push({date:new Date().toLocaleDateString(),followers:D.xhsGrowth.followers,likes:D.xhsGrowth.likes,shares:D.xhsGrowth.shares});
+  if(D.xhsGrowth.history.length>30)D.xhsGrowth.history=D.xhsGrowth.history.slice(-30);
+  AG(20,'更新小红书数据 +20G');DM('xhsGrowthInput').value='';S();RXG()
+}
+function RXG(){
+  DM('xhsFollowers').textContent=(D.xhsGrowth.followers||0).toLocaleString();
+  DM('xhsLikes').textContent=(D.xhsGrowth.likes||0).toLocaleString();
+  DM('xhsShares').textContent=(D.xhsGrowth.shares||0).toLocaleString();
+  DM('xhsNotes').textContent=(D.xhsGrowth.notes||0).toLocaleString();
+  var el=DM('xhsGrowthHistory');
+  if(!D.xhsGrowth.history.length)el.innerHTML='';
+  else el.innerHTML=D.xhsGrowth.history.slice().reverse().slice(0,10).map(function(h){
+    return '<div class="weight-row"><span>'+h.date+'</span><span>粉'+h.followers+' 赞'+h.likes+' 转'+h.shares+'</span></div>'
+  }).join('')
+}
+RXM();RXG();
+
+// ===== 5. 收支记账 =====
+function RE(){
+  var dyT=0,wkT=0;
+  var n=new Date(),ds=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime();
+  var dow=n.getDay()||7,ws=ds-(dow-1)*86400000;
+
+  var lst=DM('expenseList');
+  if(!D.expenses.length){lst.innerHTML='<div style="font-size:11px;color:#FFB5A7;padding:10px">开始记账，养成理财好习惯！</div>'}
+  else lst.innerHTML=D.expenses.slice().reverse().slice(0,30).map(function(e){
+    var cls=e.amount>=0?'income':'expense';
+    return '<div class="expense-row"><span>'+e.date+' | '+e.desc+'</span><span class="amt '+cls+'">'+(e.amount>=0?'+':'')+e.amount.toFixed(2)+'</span></div>'
+  }).join('');
+
+  D.expenses.forEach(function(e){
+    var ps=e.date.split('-'),ed=new Date(parseInt(ps[0]),parseInt(ps[1])-1,parseInt(ps[2])).getTime();
+    if(ed>=ds)dyT+=Math.max(0,-e.amount);
+    if(ed>=ws)wkT+=Math.max(0,-e.amount);
+  });
+
+  DM('daySpent').textContent=dyT.toFixed(0);
+  DM('weekSpent').textContent=wkT.toFixed(0);
+  var dp=Math.min(100,Math.round((dyT/D.dayBudget)*100));
+  var wp=Math.min(100,Math.round((wkT/D.weekBudget)*100));
+  DM('dayBudgetBar').style.width=dp+'%';DM('dayBudgetPercent').textContent=dp+'%';
+  DM('weekBudgetBar').style.width=wp+'%';DM('weekBudgetPercent').textContent=wp+'%';
+  DM('dayBudgetDisplay').textContent=D.dayBudget;
+  DM('weekBudgetDisplay').textContent=D.weekBudget;
+  DM('dayBudgetBar').className='progress-fill '+(dp>100?'pf-red':dp>80?'pf-gold':'pf-green');
+  DM('weekBudgetBar').className='progress-fill '+(wp>100?'pf-red':wp>80?'pf-gold':'pf-green');
+}
+DM('addExpense').addEventListener('click',function(){
+  var desc=DM('expenseDesc').value.trim(),amt=parseFloat(DM('expenseAmt').value);
+  if(!desc||isNaN(amt)||amt===0)return;
+  var ds=DS();
+  D.expenses.push({date:ds,desc:desc,amount:amt});
+  D.expenses.sort(function(a,b){return a.date>b.date?1:-1});
+
+  var n=new Date(),dayS=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime();
+  var dow=n.getDay()||7,weekS=dayS-(dow-1)*86400000;
+  var dyT=0,wkT=0;
+  D.expenses.forEach(function(e){
+    var ps=e.date.split('-'),ed=new Date(parseInt(ps[0]),parseInt(ps[1])-1,parseInt(ps[2])).getTime();
+    if(ed>=dayS)dyT+=Math.max(0,-e.amount);
+    if(ed>=weekS)wkT+=Math.max(0,-e.amount);
+  });
+
+  if(amt<0&&dyT>D.dayBudget){DG(100,'日预算超支! -100G 惩罚!');SAY_RAND('moneyOver')}
+  if(amt<0&&wkT>D.weekBudget){DG(200,'周预算超支! -200G 惩罚!');SAY_RAND('moneyOver')}
+  if(amt>=0){AG(5,'收入记账 +5G');SAY_RAND('moneyIn')}
+
+  DM('expenseDesc').value='';DM('expenseAmt').value='';S();RE()
+});
+RE();
+
+// ===== 6a. 日记 =====
+DM('diarySave').addEventListener('click',function(){
+  var txt=DM('diaryText').value.trim();if(!txt)return;
+  var ds=DS(),ex=D.diaryEntries.find(function(e){return e.date===ds});
+  if(ex){ex.content=txt;ex.time=new Date().toLocaleTimeString()}
+  else{D.diaryEntries.push({date:ds,content:txt,time:new Date().toLocaleTimeString()})}
+  D.diaryEntries.sort(function(a,b){return a.date>b.date?1:-1});
+
+  var n=new Date(),yd=new Date(n);yd.setDate(yd.getDate()-1);
+  var ys=yd.getFullYear()+'-'+String(yd.getMonth()+1).padStart(2,'0')+'-'+String(yd.getDate()).padStart(2,'0');
+  if(ds!==D.lastDiaryDate){
+    if(D.lastDiaryDate===ys){D.diaryStreak++}else{D.diaryStreak=1}
+    D.lastDiaryDate=ds;
+  }
+  DM('diaryStreak').textContent=D.diaryStreak;
+  if(D.diaryEntries.length>1&&D.diaryStreak>=3)AG(20,'连续3天写日记 +20G 额外奖励!');
+  AG(30,'写日记 +30G');SAY_RAND('diary');DM('diaryText').value='';S();
+});
+DM('diaryStreak').textContent=D.diaryStreak||0;
+
+DM('viewDiaryBtn').addEventListener('click',function(){
+  var el=DM('diaryListView');
+  if(el.style.display==='none'){
+    if(!D.diaryEntries.length)el.innerHTML='<div style="font-size:11px;color:#FFB5A7;padding:10px">还没有日记记录</div>';
+    else el.innerHTML=D.diaryEntries.slice().reverse().map(function(e){
+      return '<div class="diary-entry"><div class="diary-date">'+e.date+' '+e.time+'</div><div class="diary-content">'+e.content+'</div></div>'
+    }).join('');
+    el.style.display='block';
+    DM('viewDiaryBtn').textContent='收起日记';
+  }else{
+    el.style.display='none';
+    DM('viewDiaryBtn').textContent='查看历史日记';
+  }
+});
+
+// ===== 6b. 阅读 =====
+DM('readCheckin').addEventListener('click',function(){
+  var title=DM('bookTitle').value.trim(),pages=DM('bookPages').value;
+  if(!title)return;
+  var ds=DS();
+  D.currentBook=title;
+  D.readLog.push({date:ds,book:title,pages:parseInt(pages)||0,note:DM('bookNotes').value});
+  if(D.readLog.length>50)D.readLog=D.readLog.slice(-50);
+
+  var n=new Date(),yd=new Date(n);yd.setDate(yd.getDate()-1);
+  var ys=yd.getFullYear()+'-'+String(yd.getMonth()+1).padStart(2,'0')+'-'+String(yd.getDate()).padStart(2,'0');
+  if(ds!==D.lastReadDate){
+    if(D.lastReadDate===ys){D.readStreak++}else{D.readStreak=1}
+    D.lastReadDate=ds;
+  }
+  DM('readStreak').textContent=D.readStreak;
+  DM('currentBook').textContent='当前在读：《'+D.currentBook+'》';
+  AG(20,'阅读打卡 +20G');SAY_RAND('read');DM('bookTitle').value='';DM('bookPages').value='';DM('bookNotes').value='';S();RRH()
+});
+DM('saveBookNoteBtn').addEventListener('click',function(){
+  D.currentBook=DM('bookTitle').value||D.currentBook;S();AG(5,'保存读书笔记 +5G')
+});
+function RRH(){
+  var el=DM('readHistory');
+  if(!D.readLog.length){el.innerHTML='<em style="font-size:11px;color:#FFB5A7">开始你的阅读之旅吧！</em>';return}
+  el.innerHTML=D.readLog.slice().reverse().slice(0,10).map(function(r){
+    return '<div class="todo-item" style="font-size:11px"><span>'+r.date+'</span> <span>《'+r.book+'》</span> <span style="color:#FFB5A7">'+r.pages+'页</span></div>'
+  }).join('')
+}
+DM('currentBook').textContent=D.currentBook?'当前在读：《'+D.currentBook+'》':'当前在读：暂无';
+DM('readStreak').textContent=D.readStreak||0;
+RRH();
+
+// ===== 6c. 电影 =====
+DM('movieCheckin').addEventListener('click',function(){
+  var title=DM('movieTitle').value.trim(),rating=DM('movieRating').value;
+  if(!title)return;
+  var ds=DS();
+  D.movieLog.push({date:ds,title:title,rating:parseFloat(rating)||0,review:DM('movieReview').value});
+  if(D.movieLog.length>30)D.movieLog=D.movieLog.slice(-30);
+
+  var n=new Date(),wa=new Date(n);wa.setDate(wa.getDate()-7);
+  var wds=wa.getFullYear()+'-'+String(wa.getMonth()+1).padStart(2,'0')+'-'+String(wa.getDate()).padStart(2,'0');
+  var weekCount=D.movieLog.filter(function(m){return m.date>=wds}).length;
+
+  DM('movieStreak').textContent=weekCount;
+  if(DM('movieReview').value.trim()){AG(5,'影评 +5G');SAY_RAND('movie')}
+  else SAY_RAND('movie');
+  AG(20,'电影记录 +20G');DM('movieTitle').value='';DM('movieRating').value='';DM('movieReview').value='';S();RMH()
+});
+function RMH(){
+  var el=DM('movieHistory');
+  if(!D.movieLog.length){el.innerHTML='<em style="font-size:11px;color:#FFB5A7">一起看电影吧！</em>';return}
+  el.innerHTML=D.movieLog.slice().reverse().slice(0,10).map(function(m){
+    var stars='';for(var i=0;i<Math.round(m.rating/2);i++)stars+='*';
+    return '<div class="todo-item" style="font-size:11px"><span>'+m.date+'</span> <span>《'+m.title+'》</span> <span style="color:#FFB5A7">'+stars+' '+m.rating+'分</span></div>'
+  }).join('')
+}
+DM('movieStreak').textContent=D.movieStreak||0;
+RMH();
+
+// ===== 6d. 自定义习惯 =====
+function RCH(){
+  var el=DM('customHabits');
+  if(!D.customHabits.length){el.innerHTML='<em style="font-size:11px;color:#FFB5A7">添加你的专属习惯吧！</em>';return}
+  el.innerHTML=D.customHabits.map(function(h,i){
+    var days='';
+    for(var d=0;d<7;d++){
+      var dd=new Date();dd.setDate(dd.getDate()-d);
+      var ds2=dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');
+      var ck=h.checkedDates&&h.checkedDates.indexOf(ds2)>=0;
+      var today=d===0;
+      days='<span class="habit-day'+(ck?' done':'')+(today?' today':'')+'" onclick="TCH('+i+','+d+')">'+
+        String(dd.getMonth()+1)+'/'+dd.getDate()+'</span>'+days;
+    }
+    return '<div class="habit-card" style="margin-bottom:8px">'+
+      '<div class="habit-header"><h4>'+h.name+'</h4>'+
+      '<span class="habit-streak"><span class="fire">火</span> 连续 <strong>'+calcStreak(h.checkedDates||[])+'</strong> 天</span></div>'+
+      '<div class="habit-check-row">'+days+'</div>'+
+      '<button class="btn sm danger" style="margin-top:4px" onclick="DCH('+i+')">删除此习惯</button></div>'
+  }).join('')
+}
+function calcStreak(dates){
+  if(!dates.length)return 0;
+  dates.sort(function(a,b){return a>b?-1:1});
+  var s=0,n=new Date();
+  for(var i=0;i<dates.length;i++){
+    var dd=new Date(n);dd.setDate(dd.getDate()-i);
+    var exp=dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');
+    if(dates[0]===exp){s++;dates.shift()}else break
+  }
+  return s
+}
+function TCH(hi,dayOffset){
+  var dd=new Date();dd.setDate(dd.getDate()-dayOffset);
+  var ds2=dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');
+  if(!D.customHabits[hi].checkedDates)D.customHabits[hi].checkedDates=[];
+  var idx=D.customHabits[hi].checkedDates.indexOf(ds2);
+  if(idx>=0){D.customHabits[hi].checkedDates.splice(idx,1)}
+  else{D.customHabits[hi].checkedDates.push(ds2);if(dayOffset===0){AG(15,'习惯打卡 +15G');SAY_RAND('habitCheckin')}}
+  S();RCH()
+}
+function DCH(hi){D.customHabits.splice(hi,1);S();RCH()}
+DM('addCustomHabitBtn').addEventListener('click',function(){
+  var nm=DM('customHabitName').value.trim();if(!nm)return;
+  D.customHabits.push({name:nm,checkedDates:[]});AG(10,'添加习惯 +10G');SAY_RAND('habitCheckin');DM('customHabitName').value='';S();RCH()
+});
+RCH();
+
+// ===== 农场Canvas =====
+(function(){
+  var cv=DM('farmCanvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  var seed=42;
+  function rnd(){seed=(seed*16807)%2147483647;return(seed-1)/2147483646}
+  function DP(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))}
+  function DF(){
+    ctx.clearRect(0,0,W,H);
+    DP(0,0,W,60,'#A8D8EA');
+    ctx.fillStyle='#A8E6CF';ctx.beginPath();ctx.moveTo(0,50);
+    for(var x=0;x<W;x+=8)ctx.lineTo(x,30+Math.sin(x*0.008)*12+Math.sin(x*0.02)*6);
+    ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();
+
+    var cY=[15,10,18],cX=[80,300,550];
+    for(var c=0;c<cX.length;c++){
+      var cx=cX[c]+Math.sin(Date.now()*0.0001+c)*15;
+      ctx.fillStyle='rgba(255,255,255,.85)';
+      ctx.fillRect(Math.round(cx),cY[c],32,10);
+      ctx.fillRect(Math.round(cx)+6,cY[c]-5,20,8);
+      ctx.fillRect(Math.round(cx)+12,cY[c]+2,16,6);
+    }
+
+    DP(0,65,W,75,'#FFE5EC');
+    for(var x2=0;x2<W;x2+=4)for(var y2=65;y2<H;y2+=4)if(rnd()<0.03)DP(x2,y2,4,4,'#A8E6CF');
+
+    var csX=40,csY=90,csSX=22,csSY=22;
+    var crops=[{t:'carrot',s:3,c:'#FFB088'},{t:'wheat',s:4,c:'#FFD66B'},{t:'pumpkin',s:2,c:'#FFB088'},{t:'tomato',s:3,c:'#FF6B8A'},{t:'corn',s:4,c:'#FFD66B'},{t:'carrot',s:2,c:'#FFB088'},{t:'wheat',s:3,c:'#FFD66B'},{t:'pumpkin',s:1,c:'#A8E6CF'},{t:'tomato',s:4,c:'#FF6B8A'},{t:'corn',s:3,c:'#FFD66B'},{t:'sunflower',s:4,c:'#FFD66B'},{t:'blueberry',s:3,c:'#74B9FF'},{t:'coffee',s:2,c:'#C97A8F'},{t:'strawberry',s:3,c:'#FF85A1'},{t:'eggplant',s:4,c:'#C9A0DC'}];
+    for(var ci=0;ci<Math.min(crops.length,40);ci++){
+      var cp=crops[ci],col=ci%10,row=Math.floor(ci/10);
+      var cx2=csX+col*csSX,cy2=csY+row*csSY;
+      DP(cx2,cy2,18,14,'#C97A8F');DP(cx2+1,cy2+1,16,12,'#C97A8F');
+      DP(cx2+6,cy2+2,2,8,'#88D8B0');
+      if(cp.s>=2){DP(cx2+2,cy2+4,4,2,'#A8E6CF');DP(cx2+10,cy2+4,4,2,'#A8E6CF')}
+      if(cp.s>=3){
+        if(cp.t==='sunflower'){DP(cx2+4,cy2-2,8,8,cp.c);DP(cx2+6,cy2+4,4,2,'#FFB5A7')}
+        else if(cp.t==='pumpkin'){DP(cx2+4,cy2,10,8,cp.c)}
+        else{DP(cx2+4,cy2-1,8,8,cp.c)}
+      }
+    }
+
+    var hx=W-190,hy=60;
+    DP(hx+8,hy+16,60,28,'#FFB5A7');DP(hx+10,hy+18,56,24,'#FFCAD4');
+    ctx.fillStyle='#FFB5A7';ctx.beginPath();ctx.moveTo(hx,hy+18);ctx.lineTo(hx+38,hy-3);ctx.lineTo(hx+76,hy+18);ctx.fill();
+    DP(hx+28,hy+24,18,20,'#C97A8F');DP(hx+36,hy+32,2,2,'#FFD66B');
+    DP(hx+14,hy+24,8,8,'#A8D8EA');DP(hx+50,hy+24,8,8,'#A8D8EA');
+
+    var ck1x=hx-50,ck1y=hy+30;
+    DP(ck1x+3,ck1y,6,6,'#FFF');DP(ck1x+1,ck1y-3,3,3,'#FFCAD4');
+    DP(ck1x,ck1y+5,3,3,'#FFB088');DP(ck1x+9,ck1y+5,3,3,'#FFB088');DP(ck1x+10,ck1y+1,3,3,'#FF6B8A');
+    DP(ck1x+20,ck1y+3,6,6,'#FFCAD4');DP(ck1x+18,ck1y,3,3,'#FFCAD4');
+    DP(ck1x+17,ck1y+8,3,3,'#FFB088');DP(ck1x+26,ck1y+8,3,3,'#FFB088');DP(ck1x+27,ck1y+4,3,3,'#FF6B8A');
+    DP(30,68,24,4,'#FFB5A7');DP(70,68,24,4,'#FFB5A7');DP(110,68,24,4,'#FFB5A7');
+
+    var tx=280,ty=120;
+    DP(tx+6,ty+5,3,6,'#C97A8F');DP(tx+2,ty,10,8,'#88D8B0');DP(tx+3,ty-2,8,5,'#A8E6CF');
+    var tx2=220,ty2=125;
+    DP(tx2+4,ty2+4,2,4,'#C97A8F');DP(tx2,ty2,8,6,'#88D8B0');DP(tx2+2,ty2-1,6,4,'#A8E6CF');
+  }
+  DF();
+  function anim(){DF();requestAnimationFrame(anim)}
+  anim();
+})();
+
+// ===== 金币商城配置 =====
+var SHOP_ITEMS = [
+  {id:'tea',    name:'治愈奶茶',   emoji:'🧋', price:50,  desc:'喝一口心情都变好了'},
+  {id:'cake',   name:'草莓蛋糕',   emoji:'🍰', price:100, desc:'甜甜的奖励自己'},
+  {id:'flower', name:'小太阳花',   emoji:'🌻', price:80,  desc:'看了心情都阳光了'},
+  {id:'cat',    name:'懒喵玩偶',   emoji:'🐱', price:200, desc:'摸鱼好伙伴'},
+  {id:'bag',    name:'时尚小包包', emoji:'👜', price:300, desc:'出门必备单品'},
+  {id:'star',   name:'闪亮星星',   emoji:'⭐', price:150, desc:'照亮你的每一天'},
+  {id:'crown',  name:'小小皇冠',   emoji:'👑', price:500, desc:'你就是最棒的女王！'},
+  {id:'rainbow',name:'彩虹糖',     emoji:'🌈', price:180, desc:'生活需要点色彩'},
+  {id:'sleep',  name:'好梦卡',     emoji:'😴', price:120, desc:'累了就休息下'}
+];
+
+// ===== 渲染商城
+function RSHOP(){
+  var gd=DM('shopGoldDisplay');if(gd)gd.textContent=D.gold.toLocaleString();
+  var ct=DM('shopItems');if(!ct)return;
+  ct.innerHTML='';
+  SHOP_ITEMS.forEach(function(it){
+    var owned=D.exchanged.indexOf(it.id)>=0;
+    var canBuy=D.gold>=it.price;
+    var div=document.createElement('div');
+    div.className='shop-card'+(owned?' owned':'');
+    div.innerHTML='<div class="shop-emoji">'+it.emoji+'</div>'+
+      '<div class="shop-name">'+it.name+'</div>'+
+      '<div class="shop-desc">'+it.desc+'</div>'+
+      '<div class="shop-price">'+it.price+' G</div>'+
+      (owned
+        ? '<button class="shop-buy owned-btn" disabled>已拥有</button>'
+        : '<button class="shop-buy" '+(canBuy?'':'disabled')+' onclick="BUY(\''+it.id+'\')">兑换</button>');
+    ct.appendChild(div);
+  });
+  // 渲染自定义物品
+  if(D.customShopItems&&D.customShopItems.length){
+    D.customShopItems.forEach(function(it){
+      var owned=D.exchanged.indexOf(it.id)>=0;
+      var canBuy=D.gold>=it.price;
+      var div=document.createElement('div');
+      div.className='shop-card'+(owned?' owned':'');
+      div.innerHTML='<div class="shop-emoji">'+it.emoji+'</div>'+
+        '<div class="shop-name">'+it.name+'</div>'+
+        '<div class="shop-desc">'+it.desc+'</div>'+
+        '<div class="shop-price">'+it.price+' G</div>'+
+        (owned
+          ? '<button class="shop-buy owned-btn" disabled>已拥有</button>'
+          : '<button class="shop-buy" '+(canBuy?'':'disabled')+' onclick="BUY(\''+it.id+'\')">兑换</button>')+
+        '<button class="shop-buy danger" style="margin-top:4px" onclick="removeCustomShopItem(\''+it.id+'\')">删除</button>';
+      ct.appendChild(div);
+    })
+  }
+  var inv=DM('myInventory');if(!inv)return;
+  if(!D.exchanged.length){inv.innerHTML='还没有物品，去商城兑换你的第一个宝贝吧！';inv.style.cssText='color:#FFB5A7;font-size:12px;padding:10px;background:rgba(255,255,255,.4);border:2px dashed #FFCAD4;border-radius:3px;min-height:60px'}
+  else{inv.style.cssText='padding:8px;background:rgba(255,250,245,.6);border:2px solid #FFCAD4;border-radius:3px;min-height:60px';
+    inv.innerHTML=D.exchanged.map(function(id){
+      var it=SHOP_ITEMS.find(function(x){return x.id===id});
+      if(!it&&D.customShopItems)it=D.customShopItems.find(function(x){return x.id===id});
+      return it?('<span class="inv-item">'+it.emoji+' '+it.name+'</span>'):'';
+    }).join('');
+  }
+}
+
+// ===== 购买物品
+function BUY(id){
+  var it=SHOP_ITEMS.find(function(x){return x.id===id});
+  if(!it&&D.customShopItems)it=D.customShopItems.find(function(x){return x.id===id});
+  if(!it)return;
+  if(D.gold<it.price){SAY_RAND('noMoney');return}
+  if(D.exchanged.indexOf(id)>=0){SAY('你已经有这个啦～');return}
+  D.gold-=it.price;D.exchanged.push(id);S();
+  if(!D.inventory.items)D.inventory.items=[];
+  D.inventory.items.push(id);
+  SAY_RAND('buyItem');
+  UG();RSHOP()
+}
+
+function addCustomShopItem(){
+  var emoji=DM('customItemEmoji').value.trim()||'🎁';
+  var name=DM('customItemName').value.trim();
+  var price=parseInt(DM('customItemPrice').value);
+  var desc=DM('customItemDesc').value.trim()||'神秘物品';
+  if(!name){SAY('起个名字嘛～');return}
+  if(!price||price<1){SAY('价格不能为0哦！');return}
+  var id='custom_'+Date.now();
+  if(!D.customShopItems)D.customShopItems=[];
+  D.customShopItems.push({id:id,name:name,emoji:emoji,price:price,desc:desc});
+  DM('customItemEmoji').value='';
+  DM('customItemName').value='';
+  DM('customItemPrice').value='';
+  DM('customItemDesc').value='';
+  S();RSHOP();
+  SAY('自定义物品添加成功！去商城兑换吧～')
+}
+function removeCustomShopItem(id){
+  if(!confirm('确定删除这个自定义物品？'))return;
+  if(D.customShopItems)D.customShopItems=D.customShopItems.filter(function(x){return x.id!==id});
+  D.exchanged=D.exchanged.filter(function(x){return x!==id});
+  S();RSHOP()
+}
+
+// ===== 纪念日 =====
+function addAnniversary(){
+  var title=DM('anniTitle').value.trim();
+  var date=DM('anniDate').value;
+  var desc=DM('anniDesc').value.trim();
+  var img=DM('anniImg').value.trim();
+  if(!title||!date){SAY('名称和日期都要填哦～');return}
+  if(!D.anniversaries)D.anniversaries=[];
+  D.anniversaries.push({id:Date.now(),title:title,date:date,desc:desc,img:img,created:DS()});
+  DM('anniTitle').value='';DM('anniDate').value='';DM('anniDesc').value='';DM('anniImg').value='';
+  AG(10,'添加纪念日 +10G');SAY_RAND('habitCheckin');S();RANN()
+}
+function removeAnniversary(id){
+  if(!confirm('确定删除这个纪念日？'))return;
+  D.anniversaries=D.anniversaries.filter(function(a){return a.id!==id});
+  S();RANN()
+}
+function RANN(){
+  var el=DM('anniversaryList');
+  if(!D.anniversaries||!D.anniversaries.length){el.innerHTML='<div style="font-size:11px;color:#FFB5A7;padding:10px">还没有纪念日，添加你和TA的重要时刻吧～</div>';return}
+  el.innerHTML=D.anniversaries.slice().reverse().map(function(a){
+    var target=new Date(a.date);var now=new Date();
+    var diff=Math.ceil((target-now)/(1000*60*60*24));
+    var countdown=diff>0?'还有 '+diff+' 天':'已过去 '+Math.abs(diff)+' 天';
+    var imgHtml=a.img?'<img src="'+a.img+'" alt="纪念日图片" onerror="this.style.display=\'none\'">':'';
+    return '<div class="anni-card">'+
+      '<div class="anni-title">'+a.title+'</div>'+
+      '<div class="anni-date">'+a.date+'</div>'+
+      '<div class="anni-desc">'+(a.desc||'')+'</div>'+
+      imgHtml+
+      '<div class="anni-countdown">'+countdown+'</div>'+
+      '<button class="btn sm danger" style="margin-top:6px" onclick="removeAnniversary('+a.id+')">删除</button>'+
+      '</div>'
+  }).join('')
+}
+
+// ===== 像素小人绘制 =====
+function drawPixelAvatar(){
+  var cv=DM('pixelAvatarCanvas');
+  if(!cv)return;
+  var ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,80,96);
+  ctx.imageSmoothingEnabled=false;
+  function P(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h)}
+  // === 羊角（左）===
+  P(18,2,8,2,'#F5E6D3');P(16,4,12,4,'#E8D4BC');P(14,8,16,4,'#F5E6D3');
+  // === 羊角（右）===
+  P(54,2,8,2,'#F5E6D3');P(52,4,12,4,'#E8D4BC');P(50,8,16,4,'#F5E6D3');
+  // === 头发 ===
+  P(14,10,52,4,'#FF6B35');P(10,14,60,6,'#FF7F50');P(8,20,64,6,'#FF6B35');P(8,26,64,6,'#FF7F50');
+  // === 刘海 ===
+  P(14,28,8,8,'#FF6B35');P(24,30,10,8,'#FF7F50');P(36,30,10,8,'#FF6B35');P(48,30,10,8,'#FF7F50');P(58,28,8,8,'#FF6B35');
+  // === 两侧发丝 ===
+  P(6,30,6,16,'#FF6B35');P(68,30,6,16,'#FF7F50');
+  // === 耳罩 ===
+  P(4,34,10,12,'#fff');P(6,32,6,4,'#f5f5f5');P(2,36,4,8,'#fff');
+  P(66,34,10,12,'#fff');P(68,32,6,4,'#f5f5f5');P(74,36,4,8,'#fff');
+  // === 脸 ===
+  P(16,34,48,24,'#FFE4D0');P(16,54,48,4,'#FFD4BC');
+  // === 眉毛 ===
+  P(22,40,10,2,'#C97A8F');P(48,40,10,2,'#C97A8F');
+  // === 左眼（白底+金黄+橙瞳+黑瞳+高光）===
+  P(20,44,12,10,'#fff');P(22,46,8,8,'#FFD66B');P(24,48,4,4,'#FF8C00');P(25,49,2,2,'#1a1a1a');P(23,46,2,2,'#fff');
+  // === 右眼 ===
+  P(48,44,12,10,'#fff');P(50,46,8,8,'#FFD66B');P(52,48,4,4,'#FF8C00');P(53,49,2,2,'#1a1a1a');P(51,46,2,2,'#fff');
+  // === 腮红 ===
+  P(18,54,6,4,'#FFB6C1');P(56,54,6,4,'#FFB6C1');
+  // === 鼻子 ===
+  P(39,52,2,2,'#E8B89A');
+  // === 嘴巴（微笑）===
+  P(36,56,2,2,'#C97A8F');P(38,58,4,2,'#C97A8F');P(40,57,2,1,'#FFB6C1');P(42,58,4,2,'#C97A8F');P(46,56,2,2,'#C97A8F');
+  // === 脖子 ===
+  P(30,58,20,6,'#FFE4D0');
+  // === 粉色内搭 ===
+  P(26,64,28,12,'#FF9FB5');P(30,66,20,8,'#FFB6C1');
+  // === 黑色皮衣 ===
+  P(12,66,56,4,'#222');P(10,70,60,18,'#111');
+  P(20,66,40,6,'#333');P(24,68,32,4,'#2a2a2a');
+  P(39,70,2,16,'#DAA520');P(39,70,2,2,'#FFD700');
+  P(24,74,4,4,'#C0C0C0');P(24,82,4,4,'#C0C0C0');
+  P(14,78,10,2,'#444');P(56,78,10,2,'#444');
+  // === 手 ===
+  P(4,74,10,12,'#FFE4D0');P(66,74,10,12,'#FFE4D0');
+  // === 小羊挂件 ===
+  P(55,72,10,10,'#fdfdfd');P(53,74,14,6,'#fff');P(54,71,2,3,'#f0f0f0');P(64,71,2,3,'#f0f0f0');
+  P(57,76,2,2,'#1a1a1a');P(61,76,2,2,'#1a1a1a');P(58,79,4,1,'#C97A8F');
+  P(60,70,1,3,'#B8860B');
+  // === 百褶裙 ===
+  P(14,88,52,4,'#1a1a1a');P(16,92,48,4,'#111');
+}
+
+// ===== 小人说话气泡 =====
+var BUBBLE_TMR=null;
+function SAY(msg, dur){
+  var bb=DM('avatarBubble');if(!bb)return;
+  bb.textContent=msg;
+  bb.classList.add('show');
+  if(BUBBLE_TMR)clearTimeout(BUBBLE_TMR);
+  BUBBLE_TMR=setTimeout(function(){bb.classList.remove('show')},dur||2500)
+}
+function SAY_RAND(key, extra){
+  if(!NPC_DIALOG[key]||!NPC_DIALOG[key].length){return}
+  var arr=NPC_DIALOG[key], m=arr[Math.floor(Math.random()*arr.length)];
+  if(extra){m=m+' '+extra}
+  SAY(m)
+}
+// ===== NPC 对话系统（毒舌+可爱：每个行为独立池）=====
+var NPC_DIALOG = {
+  // 完成待办任务 +50G
+  todoDone: [
+    '哟，居然完成了？太阳打西边出来啦～不过才一件，尾巴翘什么呢。',
+    '哼，看在你居然动起来的份上，给你加这点零花钱，别嫌少哦，下次做快点！',
+    '完成了完成了～ 虽然慢得像蜗牛爬，但、但还是勉强夸一下吧，不许得意忘形！',
+    '哼哼，知道完成任务啦？我可是盯着呢！别想着偷懒，还有下一件在等着你！',
+    '做完啦？嘛嘛，效率就不吐槽了，总之先加金币，你继续别停，懒虫要被我戳的哦～',
+    '哼，这么晚才做完？效率堪忧啊……但、但奖励还是会给你的，别、别误会，我只是按规矩办事！',
+    '终于做完了？我还以为你要拖到明天呢。算了算了，金币给你，下次动作快点，听见了没！',
+    '哟，完成了？不错嘛……咳咳，我才没有开心呢，只是觉得你总算没让我失望而已！'
+  ],
+  // 添加任务 +5G
+  todoAdd: [
+    '又加任务？你……确定自己做得完？哼，我先记在小本本上，完不成有你好看！',
+    '加吧加吧，反正加了不做也是一堆。嘛……不过既然说了，就别让我小看你。',
+    '新增任务啦？好的好的，可别三分钟热度，我会一直在旁边监督你哦，恶狠狠地那种！',
+    '又是新任务？你是不是偷偷想卷死我？哼，你敢加我就敢陪你到做完，走着瞧！',
+    '任务越加越多，你确定不是自虐？……好吧好吧，我陪你一起做完，谁让我摊上你了呢～',
+    '再加？你这只贪心的小笨蛋……不过有目标总比躺平好，本小姐勉为其难地陪你吧！',
+    '任务列表越来越长了哦？你可别哭着找我帮忙，我、我才不会帮你做呢，只会监督你！',
+    '哼，加任务倒是挺积极，做的时候可别哭鼻子。我会拿着小鞭子在后面赶你的，嘿嘿！'
+  ],
+  // 体重打卡 +30G
+  weightCheckin: [
+    '打卡啦！体重多少？……我不说，我只默默记账，你下次自己看有没有涨，嗯？',
+    '不错不错，记得打卡。坚持就是胜利这种废话我不讲啦，总之别给我胖太快，衣服会穿不下，哼！',
+    '哟，还真上秤了？勇敢勇敢～ 不过这只是第一步，明天还得继续，不许断！',
+    '体重记下啦，嘿嘿，这可是黑历史哦～ 要是哪天你胡吃海塞，我就把你以前体重拿出来笑你！',
+    '上秤啦？的数字我可都记着呢。要是胖了……哼哼，我就天天在你耳边念减肥经，怕不怕？',
+    '打卡成功！今天也是自律的一天呢……我、我才没有佩服你，只是觉得你偶尔也挺靠谱的嘛！'
+  ],
+  // 写日记 +30G
+  diary: [
+    '写日记啦？……你不会是在写我坏话吧？……哦不是啊，那就好，咳，我就随便问问。',
+    '今天发生啥了？不用讲给我听，写下来就好。老了回头看，一定会笑自己以前真幼稚，真的！',
+    '写这么多？你……你真的好啰嗦哦……不过、不过写得认真也挺好的啦，我又没说讨厌……',
+    '打卡成功！坚持写日记的人不会太差——我才不是特意夸你哦，只是实话实说而已！',
+    '连续3天啦！你居然不是三分钟热度？！哼、哼……厉害厉害，这没什么大不了的啦，继续保持！',
+    '又在写日记了？让我猜猜，是不是又在吐槽我？……没写？那、那你还挺乖的嘛，夸你一下也不是不行～',
+    '今天的日记写了啥？……哼，我才不想看呢，只是怕你写得太无聊，以后自己看了都会睡着！',
+    '写日记上瘾了？挺好的，把开心不开心都记下来，以后……以后我陪你一起翻着看，也不是不可以啦！'
+  ],
+  // 阅读打卡 +20G
+  read: [
+    '看书啦？啧啧，你居然会看书？我还以为你手机只用来刷短视频呢，刮目相看啊～',
+    '看的什么？什么什么？……哦我不问了，反正你品味也就那样。嘛，静下心来看书是好事，继续保持，笨蛋！',
+    '阅读打卡成功！看了几页？页数我帮你记着，要是每天只看一页也太丢人了吧，别让我看不起你！',
+    '哟，有文化人了呢～ 嘿嘿，我才不会说我也想听听内容呢……等你看完，讲给我听一下也、也不是不行啦！',
+    '居然在看书？太阳真是打西边出来了……嘛，能静下心来看书的你，也没那么糟糕啦，继续保持！',
+    '看书打卡～ 别告诉我你看的是漫画啊！……不是？那还差不多，本小姐批准你继续看了！'
+  ],
+  // 电影记录 +20G
+  movie: [
+    '看电影啦？什么片？不会是烂片吧，哼哼，浪费时间还不如去睡觉。不过、不过既然写了，我就帮你记着，下次别买错票！',
+    '评分写这么高？你品味也就……等等这片子我好像也看过，还、还不错啦，你眼光偶尔也能看一次嘛！',
+    '打卡，电影+20G 到手。别总一个人看嘛……下次叫我陪你也可以啦，我爆米花要甜的，不许拒绝！',
+    '又记了一部，你最近过得不错嘛，很充实！……虽然我嘴上不说，其实看着你开心，我、我也还不赖啦～',
+    '看电影都不叫我？哼，下次必须选我喜欢的类型，不然我就……我就在你旁边剧透，怕了吧！',
+    '观影记录+1～ 要是看了烂片可别哭，我早就提醒过你要相信我的品味了，谁让你不听！'
+  ],
+  // 记账收入 +5G
+  moneyIn: [
+    '入账啦？！钱钱你终于来啦！ 省点用省点用，别转脸就花完，不然下半个月喝西北风，我可不养你哦！',
+    '收入+5，虽然不多，蚊子也是肉嘛。攒着攒着，以后换大房子给我住，听见没？',
+    '进账啦！你不会偷偷藏私房钱吧？……什么，正当收入？那我就不扣你金币啦，下不为例哦，哼！',
+    '有钱进就好，就怕只出不进，你那花钱速度我都看在眼里了！再乱买我就，我就坐在你钱包里不走了！',
+    '哟，赚钱了？那今晚能不能加个鸡腿？……我、我才不是贪吃呢，只是觉得你赚了我替你高兴而已！'
+  ],
+  // 支出超预算惩罚
+  moneyOver: [
+    '超支啦！！跟你说了省点省点你不听？！扣你金币都是轻的，我要让你长长记性，败家小孩！',
+    '唉……我都替你钱包心疼，你自己不心疼吗？再这样下去我都要变穷了，能不能学学我精打细算啊！',
+    '惩罚扣钱！该该该！让你瞎买，今晚吃泡面反省，不许加肠，我监督你！',
+    '又超支？！你的钱包在哭泣你没听见吗？！再这样我就……我就没收你的购物APP，哼！'
+  ],
+  // 工作完成 +30G
+  workDone: [
+    '工作完成啦？这才是应该的嘛，别一脸骄傲样，打工人打工魂，你要卷起来，别被比下去！',
+    '还行还行，这速度勉强及格。下面还有一堆呢，喝口水就继续，我给你数着，少做一件都不行！',
+    '嗯，挺能干的嘛……我是说勉强还看得过去啦，别飘。打工人的核心就是不停做，所以快，别磨磨唧唧！',
+    '做完一件啦？别停下，还有下一件在等着你。我会一直盯着你哦，想偷懒？没门！'
+  ],
+  // 小红书笔记内容保存
+  xhsSave: [
+    '灵感记下来啦？就这点字？……不、不，我是说字数不重要，灵感重要，下次想好了再多写点，我相信你一定能火！',
+    '写得不错嘛，加油加油，我已经准备好当大网红的助理啦！……前提是你真的火起来，别让我空等！',
+    '保存成功！灵感这东西说走就走，抓住了就好。下一篇什么时候写？我帮你催更，天天催，催到你写为止！',
+    '笔记保存好啦？记得多发多更新，我在等着给你点赞呢……哼，我才不是想看呢，只是监督你工作而已！'
+  ],
+  // 兑换商城物品
+  buyItem: [
+    '兑换成功！花钱的感觉怎么样？爽吧？不过要继续努力赚呀，不然钱包又空了，我会跟着你一起饿肚子的！',
+    '哟，舍得花钱了？这东西你喜欢就好……我我我才没有羡慕！只是、只是觉得值得就买，钱还可以再赚嘛～',
+    '买啦？嘿嘿，眼光不错嘛，和我品味一样，嘿嘿……那当然，我的眼光多高啊，买得好买得好！',
+    '剁手啦？哼哼，买了就好好用，别浪费。下次想买东西记得先问问我，本小姐的眼光可是一流的！'
+  ],
+  // 自定义习惯打卡
+  habitCheckin: [
+    '习惯打卡+1，今天也棒棒的！我在帮你数着连续天数，要是断掉……哼哼，你懂的，我会一直念到你续上为止！',
+    '坚持习惯不容易哦，你能做到，真的真的——咳咳，我不是在夸你啦，只是陈述事实而已，陈述事实！',
+    '打卡成功！这种小事还难得倒你？就是就是，我可是很看好你的，别让我失望哦！',
+    '添加新习惯了？你又想折腾自己……不过、不过有目标总是好事，本小助手陪着你，成功了给你糖吃！',
+    '坚持打卡的样子还挺帅的嘛……我、我是说挺认真的！继续保持，不许断，断了我会生气的！'
+  ],
+  // 金币不足
+  noMoney: [
+    '你好穷哦～哈哈哈哈！还不赶紧去干活赚钱！站在这里发呆金币不会从天上掉下来啦，快去快去！',
+    '没钱了没钱了！你是不是偷偷乱花了？坦白从宽，不然我要搜你身哦，嘻嘻……总之快做任务！',
+    '就这点金币还想购物？哼，你这穷光蛋，本姑娘要和你一起喝西北风了吗？快、去、赚、钱！',
+    '钱包空空如也呢～ 要不要本小姐施舍你几个任务？做完就有钱啦，还不快去！'
+  ],
+  // 戳戳奖励
+  pokeBonus: [
+    '诶！突然戳我干嘛！……不过看在你手气不错的份上，赏你两个铜板，快收起来别被抢了！',
+    '嘿嘿，被你戳中啦～这是奖励哦，下次还戳不戳？偷偷告诉你，我才不会告诉你还有更大的奖励呢！',
+    '戳到奖啦？你运气还不错嘛……哼，我才没有故意让你戳中呢，只是巧合而已！'
+  ],
+  // 戳戳普通
+  poke: [
+    '戳戳戳！你有完没完？手那么多动不如去多做两个任务啦，笨蛋！',
+    '哎呀别闹，我在监…在休息呢。…你也想休息？那就休息1分钟就好哦，多了我会拉你起来的，起来！',
+    '哼，就知道摸我，你是不是在偷懒？我眼睛可是雪亮的，快回去做事，不然、不然我要挠你痒痒了！',
+    '你再戳！再戳我就……我就多给你一句鼓励，哼！',
+    '手很闲嘛？那去写个日记给我看看？别光戳我，我可不会被你戳穿的！',
+    '戳我很好玩吗？……哼，既然你这么闲，那就去把待办任务全做完，做完再回来戳！',
+    '哎呀别戳了！再戳我要生气了……除非你保证等下认真工作，那我就原谅你，哼！'
+  ]
+};
+var AVATAR_PHRASES=[
+  '今天也要加油哦！','赚金币买好吃的！','完成任务就有奖励啦～',
+  '累了就休息一下吧～','你是最棒的！','要不要去商城逛逛？',
+  '嘿嘿，戳我干嘛呀～','记得喝水哦！','记得按时吃饭～','一步一步来，慢慢来！'
+];
+function pokeAvatar(){
+  if(Math.random()<0.2){AG(2,'戳戳奖励 +2G');SAY_RAND('pokeBonus');return}
+  SAY_RAND('poke')
+}
+
+// ===== 扩展 UG 函数同时刷新商城
+var _oldUG=UG;
+UG=function(){_oldUG();RSHOP()};
+
+// ===== 初始化
+(function(){
+  drawPixelAvatar();
+  setTimeout(function(){
+    RSHOP();RANN();
+    SAY('欢迎回来！开始今天的任务吧～', 3000);
+  },500);
+  setInterval(function(){
+    if(Math.random()<0.4){
+      var msgs=['别忘了打卡哦～','继续加油！','进度如何啦？'];
+      SAY(msgs[Math.floor(Math.random()*msgs.length)],2000)
+    }
+  },300000);
+})();
+
+// ===== 初始化完成 =====
+UG();
+console.log('小童工作台已就绪！');
+console.log('8大模块：待办 | 工作 | 体重 | 小红书 | 记账 | 习惯 | 商城 | 纪念日');
+console.log('金币系统已激活，完成任务即可赚金币！');
+
+// 函数别名（兼容HTML onclick中的调用）
+function addWorkTask(key){AWT(key)}
+function saveWorkNotes(){SWN()}
+function saveXhsContent(){SXC()}
+function fetchXhsData(){FXD()}
+function updateXhsGrowth(){UXG()}
+function addGold(n,r){AG(n,r)}
+function buyItem(id){BUY(id)}
+
+// 工作台名称可编辑
+function editTitle() {
+  var h1 = document.getElementById('workTitle');
+  var old = h1.textContent.replace(' ✎', '').trim();
+  var inp = document.createElement('input');
+  inp.type = 'text';
+  inp.value = old;
+  inp.style.cssText = 'background:#FF9FB5;color:#FFD66B;border:2px solid #FFD66B;font-size:17px;font-family:inherit;padding:4px 8px;border-radius:3px;width:200px;letter-spacing:1px;outline:none';
+  h1.innerHTML = '';
+  h1.appendChild(inp);
+  inp.focus();
+  inp.select();
+  function save() {
+    var v = inp.value.trim() || '小童工作台';
+    localStorage.setItem('work_title', v);
+    document.title = v;
+    h1.innerHTML = v + ' <span class="edit-hint">✎</span>';
+  }
+  inp.addEventListener('blur', save);
+  inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') { inp.blur(); } });
+}
+
+// 加载保存的名称
+(function() {
+  var sv = localStorage.getItem('work_title');
+  if (sv) {
+    var h1 = document.getElementById('workTitle');
+    document.title = sv;
+    h1.innerHTML = sv + ' <span class="edit-hint">✎</span>';
+  }
+})();
+</script>
+</body></html>
