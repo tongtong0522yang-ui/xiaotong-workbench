@@ -69,6 +69,49 @@ body{
 .panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .panel-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 
+.daily-fortune-card{
+  background:linear-gradient(180deg,#FFFAF5 0%,#FFE4EC 100%);
+  border:6px solid #C97A8F;
+  border-radius:8px;
+  padding:16px;
+  margin-bottom:14px;
+  position:relative;
+  box-shadow:
+    inset 0 0 0 3px #FFB5A7,
+    inset 0 0 0 6px #FF9FB5,
+    0 6px 0 #9A5A6F,
+    0 8px 16px rgba(0,0,0,.25);
+  image-rendering:pixelated;
+}
+.daily-fortune-card::before{
+  content:'';position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+  width:40px;height:14px;background:#FF6B8A;
+  border:3px solid #C97A8F;border-bottom:none;border-radius:4px 4px 0 0;
+  box-shadow:inset 0 0 0 2px #FFCAD4;
+}
+.fortune-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:11px;color:#FF9FB5;letter-spacing:1px}
+.fortune-title{font-size:22px;color:#C97A8F;text-align:center;margin:6px 0 10px;text-shadow:2px 2px 0 #FFCAD4}
+.fortune-quote{
+  background:rgba(255,250,245,.8);
+  border:3px dashed #FFCAD4;
+  border-radius:6px;
+  padding:10px 12px;
+  color:#C97A8F;
+  font-size:13px;
+  line-height:1.6;
+  text-align:center;
+  margin-bottom:10px;
+}
+.fortune-zodiac-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;justify-content:center}
+.fortune-zodiac-row label{color:#FF9FB5;font-size:12px}
+.zodiac-select{width:auto;min-width:100px;font-size:12px;padding:5px 8px;text-align:center}
+.fortune-content{background:rgba(255,202,212,.35);border:3px solid #FFCAD4;border-radius:6px;padding:12px}
+.fortune-stars{text-align:center;font-size:20px;color:#FFD66B;text-shadow:1px 1px 0 #C97A8F;margin-bottom:8px;letter-spacing:3px}
+.fortune-items{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fortune-item{background:rgba(255,250,245,.7);border:2px solid #FFCAD4;border-radius:4px;padding:6px 8px;text-align:center}
+.fortune-item .fi-label{font-size:10px;color:#FF9FB5;margin-bottom:2px}
+.fortune-item .fi-val{font-size:12px;color:#C97A8F;font-weight:bold}
+
 .inp{
   font-family:var(--px);font-size:11px;padding:7px;background:#FFFAF5;
   border:2px solid #FF9FB5;color:#C97A8F;outline:none;
@@ -229,6 +272,9 @@ textarea.inp{resize:vertical;min-height:60px}
   [style*="font-size:22px"]{font-size:14px!important}
   [style*="font-size:20px"]{font-size:14px!important}
   .todo-del{font-size:14px}
+  .fortune-title{font-size:18px}
+  .fortune-quote{font-size:12px}
+  .fortune-items{grid-template-columns:1fr 1fr}
 }
 @media(max-width:480px){
   .top h1{font-size:13px}
@@ -258,6 +304,12 @@ textarea.inp{resize:vertical;min-height:60px}
   #pixelAvatarCanvas{width:60px;height:72px}
   .avatar-bubble{max-width:150px;font-size:11px}
   .todo-del{font-size:12px}
+  .daily-fortune-card{padding:12px;border-width:4px}
+  .fortune-title{font-size:16px}
+  .fortune-quote{font-size:11px;padding:8px}
+  .fortune-stars{font-size:16px}
+  .fortune-item .fi-label{font-size:9px}
+  .fortune-item .fi-val{font-size:11px}
 }
 </style>
 </head>
@@ -267,7 +319,7 @@ textarea.inp{resize:vertical;min-height:60px}
 <div class="main">
 
 <div class="top">
-  <h1 id="workTitle" onclick="editTitle()" title="点击修改名称">小童工作台 <span class="edit-hint">✎</span></h1>
+  <h1 id="workTitle" onclick="editTitle()" title="点击修改名称"><span id="workTitleText">小童工作台</span> <span class="edit-hint">✎</span></h1>
   <div class="right">
     <span id="topTime">06:00</span>
     <span id="topDate">2026年7月30日</span>
@@ -292,6 +344,36 @@ textarea.inp{resize:vertical;min-height:60px}
 
 <!-- Tab 1: 每日待办 -->
 <div class="tab-panel active" id="tab-todo">
+  <!-- 每日运势卡片 -->
+  <div class="daily-fortune-card">
+    <div class="fortune-header">
+      <span class="fortune-label">DAILY FORTUNE</span>
+      <span class="fortune-date" id="fortuneDate">2026.07.31</span>
+    </div>
+    <h2 class="fortune-title">今日运势</h2>
+    <div class="fortune-quote" id="fortuneQuote">加载中...</div>
+    <div class="fortune-zodiac-row">
+      <label>星座：</label>
+      <select id="zodiacSelect" class="inp zodiac-select" onchange="changeZodiac(this.value)">
+        <option value="aries">白羊座</option>
+        <option value="taurus">金牛座</option>
+        <option value="gemini">双子座</option>
+        <option value="cancer">巨蟹座</option>
+        <option value="leo">狮子座</option>
+        <option value="virgo">处女座</option>
+        <option value="libra">天秤座</option>
+        <option value="scorpio">天蝎座</option>
+        <option value="sagittarius">射手座</option>
+        <option value="capricorn">摩羯座</option>
+        <option value="aquarius">水瓶座</option>
+        <option value="pisces">双鱼座</option>
+      </select>
+    </div>
+    <div class="fortune-content" id="fortuneContent">
+      <div class="fortune-stars" id="fortuneStars">★★★★☆</div>
+      <div class="fortune-items" id="fortuneItems"></div>
+    </div>
+  </div>
   <div class="panel">
     <h2>今日农活 (完成+50G)</h2>
     <div class="progress-wrap">
@@ -572,7 +654,7 @@ var D={gold:0,todos:[],workTodos:{dianping:[],douyin:[],xindian:[]},workNotes:''
   diaryEntries:[],diaryStreak:0,lastDiaryDate:'',
   readLog:[],readStreak:0,lastReadDate:'',currentBook:'',
   movieLog:[],movieStreak:0,lastMovieDate:'',
-  customHabits:[],exchanged:[],inventory:{},customShopItems:[],anniversaries:[]
+  customHabits:[],exchanged:[],inventory:{},customShopItems:[],anniversaries:[],workTitle:'小童工作台',zodiac:'aries'
 };
 try{var sv=JSON.parse(localStorage.getItem(D_K)||'{}');Object.assign(D,sv)}catch(e){}
 try{var sg=parseInt(localStorage.getItem(G_K));if(!isNaN(sg))D.gold=sg}catch(e){}
@@ -604,6 +686,13 @@ function DM(elm){return document.getElementById(elm)}
 function QS(s){return document.querySelector(s)}
 function QA(s){return document.querySelectorAll(s)}
 
+function loadTitle(){
+  var t=D.workTitle||'小童工作台';
+  document.title=t;
+  var h1=DM('workTitle');
+  if(h1)h1.innerHTML=t+' <span class="edit-hint">✎</span>';
+}
+
 // ===== 星星背景 =====
 (function(){
   var st=DM('stars');
@@ -634,6 +723,101 @@ QA('.nav-btn').forEach(function(b){
     DM('tab-'+this.dataset.tab).classList.add('active')
   })
 });
+
+// ===== 每日运势 =====
+var POISON_SOUP = [
+  '努力不一定成功，但不努力真的很舒服。',
+  '失败是成功之母，可惜你爸来得有点晚。',
+  '你并非一无所有，你还有病啊。',
+  '别总说自己一无所有，你不是还有病吗？',
+  '有时候你不努力一下，你都不知道什么叫绝望。',
+  '赚钱就像便秘，真费劲；花钱就像拉肚子，憋不住。',
+  '生活不止眼前的苟且，还有前任的请帖。',
+  '比你优秀的人还在努力，那你努力还有什么用。',
+  '你不是焦虑，你只是又懒又贪。',
+  '你以为自己是怀才不遇，其实只是怀才不够。',
+  '做人如果没有梦想，那跟无忧无虑有什么区别？',
+  '人生没有白走的路，每一步都算数——只是算的是冤枉路。',
+  '你那么努力，是为了让当初看不起你的人，继续看不起你吗？',
+  '别灰心，你最擅长的东西，可能现在还没被发明出来。',
+  '年轻的时候多吃苦，老了你就习惯了。',
+  '爱情不是你想买，想买就能买——但没钱肯定买不来。',
+  '成长就是将哭声调成静音，然后将钱包掏空。',
+  '万事开头难，中间难，结尾也难。',
+  '你不试试怎么知道自己不行？试过了，是真的不行。',
+  '条条大路通罗马，可有人就生在罗马。',
+  '虽然今天什么也没做，但还是辛苦我了。',
+  '没有什么事情能把人击倒，除非你自己先躺下。',
+  '做人嘛，最重要的是开心——如果你做得到的话。',
+  '人生就像一盒巧克力，你永远不知道下一颗是不是苦的。',
+  '如果你觉得生活很苦，那就对了，因为甜是给有钱人的。'
+];
+
+var ZODIAC_DATA = {
+  aries:{name:'白羊座',elements:['火','红','1','狮子座','今天冲就完事了，但别撞南墙。']},
+  taurus:{name:'金牛座',elements:['土','绿','6','处女座','吃点好的，钱花了再赚。']},
+  gemini:{name:'双子座',elements:['风','黄','3','天秤座','话别说太满，留点神秘感。']},
+  cancer:{name:'巨蟹座',elements:['水','银','2','双鱼座','今天适合宅家，外卖点起来。']},
+  leo:{name:'狮子座',elements:['火','金','9','白羊座','你就是全场焦点，别低调。']},
+  virgo:{name:'处女座',elements:['土','棕','5','摩羯座','细节决定成败，但也别纠结。']},
+  libra:{name:'天秤座',elements:['风','粉','7','双子座','选择困难症？闭眼选一个。']},
+  scorpio:{name:'天蝎座',elements:['水','黑','8','巨蟹座','今天的直觉很准，信自己。']},
+  sagittarius:{name:'射手座',elements:['火','紫','4','狮子座','想浪就去浪，注意安全。']},
+  capricorn:{name:'摩羯座',elements:['土','灰','10','金牛座','工作再忙，也别忘了摸鱼。']},
+  aquarius:{name:'水瓶座',elements:['风','蓝','11','双子座','奇思妙想很多，挑一个做。']},
+  pisces:{name:'双鱼座',elements:['水','海蓝','12','巨蟹座','做梦可以，但闹钟别关。']}
+};
+
+// 用日期做种子，保证同一天同星座结果固定
+function fortuneSeed(str){
+  var s=0;
+  for(var i=0;i<str.length;i++)s=((s<<5)-s)+str.charCodeAt(i),s|=0;
+  return Math.abs(s)
+}
+function seededRandom(seed){return function(){seed=(seed*9301+49297)%233280;return seed/233280}}
+
+function getFortune(zodiac, dateStr){
+  var z=ZODIAC_DATA[zodiac];
+  var seed=fortuneSeed(zodiac+'_'+dateStr);
+  var rnd=seededRandom(seed);
+  var stars=3+Math.floor(rnd()*3); // 3-5星
+  var soupIdx=Math.floor(rnd()*POISON_SOUP.length);
+  var colors=['#FF6B8A','#FFD66B','#88D8B0','#74B9FF','#C97A8F','#FFB5A7','#A8E6CF','#FF9FB5'];
+  var luckyColor=colors[Math.floor(rnd()*colors.length)];
+  var luckyNum=Math.floor(rnd()*99)+1;
+  var matchSigns=Object.keys(ZODIAC_DATA).filter(function(k){return k!==zodiac});
+  var matchSign=matchSigns[Math.floor(rnd()*matchSigns.length)];
+  return {
+    name:z.name,
+    stars:stars,
+    soup:POISON_SOUP[soupIdx],
+    luckyColor:luckyColor,
+    luckyNum:luckyNum,
+    match:ZODIAC_DATA[matchSign].name,
+    advice:z.elements[4]
+  }
+}
+
+function RFORTUNE(){
+  var today=DS().replace(/-/g,'.');
+  DM('fortuneDate').textContent=today;
+  var zodiac=D.zodiac||'aries';
+  DM('zodiacSelect').value=zodiac;
+  var f=getFortune(zodiac,today);
+  DM('fortuneQuote').textContent='💬 '+f.soup;
+  var stars='';
+  for(var i=0;i<5;i++)stars+=i<f.stars?'★':'☆';
+  DM('fortuneStars').textContent=stars;
+  DM('fortuneItems').innerHTML=
+    '<div class="fortune-item"><div class="fi-label">幸运色</div><div class="fi-val" style="color:'+f.luckyColor+'">'+f.luckyColor+'</div></div>'+
+    '<div class="fortune-item"><div class="fi-label">幸运数字</div><div class="fi-val">'+f.luckyNum+'</div></div>'+
+    '<div class="fortune-item"><div class="fi-label">速配星座</div><div class="fi-val">'+f.match+'</div></div>'+
+    '<div class="fortune-item"><div class="fi-label">今日建议</div><div class="fi-val">'+f.advice+'</div></div>';
+}
+function changeZodiac(z){
+  D.zodiac=z;S();RFORTUNE();
+  SAY('换星座啦？ '+ZODIAC_DATA[z].name+' 今日运势已更新～')
+}
 
 // ===== 1. 每日待办 =====
 function RT(){
@@ -1411,6 +1595,8 @@ UG=function(){_oldUG();RSHOP()};
 // ===== 初始化
 (function(){
   drawPixelAvatar();
+  loadTitle();
+  RFORTUNE();
   setTimeout(function(){
     RSHOP();RANN();
     SAY('欢迎回来！开始今天的任务吧～', 3000);
@@ -1452,22 +1638,13 @@ function editTitle() {
   inp.select();
   function save() {
     var v = inp.value.trim() || '小童工作台';
-    localStorage.setItem('work_title', v);
+    D.workTitle = v;
+    S();
     document.title = v;
     h1.innerHTML = v + ' <span class="edit-hint">✎</span>';
   }
   inp.addEventListener('blur', save);
   inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') { inp.blur(); } });
 }
-
-// 加载保存的名称
-(function() {
-  var sv = localStorage.getItem('work_title');
-  if (sv) {
-    var h1 = document.getElementById('workTitle');
-    document.title = sv;
-    h1.innerHTML = sv + ' <span class="edit-hint">✎</span>';
-  }
-})();
 </script>
 </body></html>
